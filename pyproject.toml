@@ -1,0 +1,30 @@
+[project]
+name = "dhanush-gard-14-september"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Vivek29112001", email = "Vivek15292001@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "aiosqlite>=0.22.1",
+    "fastapi>=0.141.1",
+    "groq>=1.7.0",
+    "httpx>=0.28.1",
+    "mcp[cli]>=2.2.0",
+    "pydantic>=2.13.5",
+    "pydantic-settings>=2.15.0",
+    "python-dotenv>=1.2.3",
+    "requests>=2.34.2",
+    "sqlalchemy>=2.0.52",
+    "streamlit>=1.63.0",
+    "uvicorn[standard]>=0.52.4",
+]
+
+[project.scripts]
+dhanush-gard-14-september = "dhanush_gard_14_september:main"
+
+[build-system]
+requires = ["uv_build>=0.12.0,<0.13.0"]
+build-backend = "uv_build"
