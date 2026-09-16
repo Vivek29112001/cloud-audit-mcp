@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Any
 from pydantic import BaseModel,Field
 
@@ -218,3 +219,58 @@ class AWSEC2DeepScanResult(BaseModel):
     warnings: list[str] = Field(
         default_factory=list
     )
+    
+    
+class AWSScanSummary(BaseModel):
+    account_id: str
+
+    enabled_regions: int = 0
+    disabled_regions: int = 0
+
+    availability_zones: int = 0
+
+    used_regions: int = 0
+
+    detected_services: int = 0
+
+    discovered_resources: int = 0
+
+    deep_scanned_services: int = 0
+
+
+class AWSScanResult(BaseModel):
+    scan_id: str
+
+    status: str
+
+    started_at: datetime
+    completed_at: datetime | None = None
+
+    account: AWSIdentity | None = None
+
+    regions: AWSRegionDiscoveryResult | None = None
+
+    zones: AWSZoneDiscoveryResult | None = None
+
+    resources: AWSResourceDiscoveryResult | None = None
+
+    deep_scan: dict[str, Any] = Field(
+        default_factory=dict
+    )
+
+    summary: AWSScanSummary | None = None
+
+    warnings: list[str] = Field(
+        default_factory=list
+    )
+    
+class AWSDeepScanResult(BaseModel):
+    services: dict[str, Any] = Field(
+        default_factory=dict
+    )
+
+    warnings: list[str] = Field(
+        default_factory=list
+    )
+    
+

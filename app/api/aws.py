@@ -1,52 +1,3 @@
-# from fastapi import (
-#     APIRouter,
-#     HTTPException,
-#     status,
-# )
-
-# from app.api.schemas.aws import (
-#     AWSAvailabilityZoneResponse,
-#     AWSDetectedServiceResponse,
-#     AWSRegionDiscoveryResponse,
-#     AWSRegionResponse,
-#     AWSResourceDiscoveryRequest,
-#     AWSResourceDiscoveryResponse,
-#     AWSResourceResponse,
-#     AWSVerifyRequest,
-#     AWSVerifyResponse,
-#     AWSZoneDiscoveryResponse,
-# )
-
-# from app.providers.aws.connection import (
-#     AWSConnectionService,
-# )
-
-# from app.providers.aws.credentials import (
-#     AWSCredentials,
-# )
-
-# from app.providers.aws.discovery import (
-#     AWSResourceDiscoveryService,
-# )
-
-# from app.providers.aws.exceptions import (
-#     AWSMCPExecutionError,
-#     InvalidAWSCredentialsError,
-# )
-
-# from app.providers.aws.mcp_client import (
-#     AWSMCPClient,
-# )
-
-# from app.providers.aws.regions import (
-#     AWSRegionService,
-# )
-
-# from app.providers.aws.zones import (
-#     AWSZoneService,
-# )
-
-
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, status
@@ -77,6 +28,8 @@ from app.providers.aws.exceptions import (
 from app.providers.aws.models import AWSDetectedService
 from app.providers.aws.regions import AWSRegionService
 from app.providers.aws.zones import AWSZoneService
+
+from app.providers.aws.scanner import AWSScanOrchestrator
 
 router = APIRouter(
     prefix="/aws",
@@ -463,3 +416,36 @@ async def deep_scan_aws(
         services=result.services,
         warnings=result.warnings,
     )
+    
+    
+@router.post(
+    "/scan"
+)
+async def run_aws_scan(
+    request: AWSVerifyRequest,
+):
+
+    credentials = AWSCredentials(
+        access_key_id=(
+            request.access_key_id
+        ),
+        secret_access_key=(
+            request.secret_access_key
+        ),
+        session_token=(
+            request.session_token
+        ),
+    )
+
+    scanner = AWSScanOrchestrator()
+
+    result = await scanner.scan(
+        credentials
+    )
+
+    return result.model_dump(
+        mode="json"
+    ) 
+    
+    
+    

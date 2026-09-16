@@ -147,3 +147,6 @@ class AWSDeepScanRequest(AWSVerifyRequest):
 class AWSDeepScanResponse(BaseModel):
     services: dict[str, Any]
     warnings: list[str]
+
+class AWSZoneDiscoveryRequest(AWSVerifyRequest):
+    enabled_regions: list[str]
