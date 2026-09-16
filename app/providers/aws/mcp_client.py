@@ -2,98 +2,183 @@ from __future__ import annotations
 
 from typing import Any
 
-from mcp import Client, StdioServerParameters
+from mcp import (
+    Client,
+    StdioServerParameters,
+)
 
 from app.core.config import settings
-from app.providers.aws.credentials import AWSCredentials
+
+from app.providers.aws.credentials import (
+    AWSCredentials,
+)
 
 
 class AWSMCPClient:
-    def __init__(self, credentials: AWSCredentials) -> None:
+
+    def __init__(
+        self,
+        credentials: AWSCredentials,
+    ) -> None:
+
         self._credentials = credentials
 
-    def _server_parameters(self) -> StdioServerParameters:
+    # ========================================================
+    # MCP SERVER CONFIGURATION
+    # ========================================================
+
+    def _server_parameters(
+        self,
+    ) -> StdioServerParameters:
+
         args = [
-            # "mcp-proxy-for-aws@1.6.3",
-            "mcp-proxy-for-aws-cli@latest",
+            "mcp-proxy-for-aws@1.6.3",
+
             settings.aws_mcp_endpoint,
+
             "--region",
             settings.aws_mcp_endpoint_region,
+
             "--metadata",
-            f"AWS_REGION={self._credentials.default_region}",
+            (
+                "AWS_REGION="
+                f"{self._credentials.default_region}"
+            ),
+
             "--retries",
             "2",
+
             "--timeout",
-            str(settings.mcp_timeout),
+            str(
+                settings.mcp_timeout
+            ),
+
             "--tool-timeout",
-            str(settings.mcp_tool_timeout),
+            str(
+                settings.mcp_tool_timeout
+            ),
         ]
 
-        # if settings.mcp_read_only:
-        #     args.append("--read-only")
+        if settings.mcp_read_only:
+            args.append(
+                "--read-only"
+            )
 
         return StdioServerParameters(
             command="uvx",
             args=args,
-            env=self._credentials.to_environment(),
+            env=(
+                self._credentials
+                .to_environment()
+            ),
         )
 
-    async def list_tools(self) -> list[Any]:
-        params = self._server_parameters()
+    # ========================================================
+    # TOOL DISCOVERY
+    # ========================================================
 
-        async with Client(params) as client:
-            result = await client.list_tools()
-            return list(result.tools)
-
-    async def call_tool(
+    async def list_tools(
         self,
-        tool_name: str,
-        arguments: dict[str, Any],
-    ) -> Any:
-        params = self._server_parameters()
+    ) -> list[Any]:
 
-        async with Client(params) as client:
-            return await client.call_tool(
-                tool_name,
-                arguments,
+        params = (
+            self._server_parameters()
+        )
+
+        async with Client(
+            params
+        ) as client:
+
+            result = (
+                await client.list_tools()
+            )
+
+            return list(
+                result.tools
             )
 
     async def find_tool(
         self,
         tool_suffix: str,
     ) -> Any:
+
         tools = await self.list_tools()
 
         for tool in tools:
-            if tool.name.endswith(tool_suffix):
+
+            if tool.name.endswith(
+                tool_suffix
+            ):
                 return tool
 
-        available = ", ".join(tool.name for tool in tools)
+        available = ", ".join(
+            tool.name
+            for tool in tools
+        )
 
         raise RuntimeError(
-            f"AWS MCP tool ending with '{tool_suffix}' was not found. "
+            "AWS MCP tool ending with "
+            f"'{tool_suffix}' was not found. "
             f"Available tools: {available}"
         )
+
+    # ========================================================
+    # TOOL EXECUTION
+    # ========================================================
+
+    async def call_tool(
+        self,
+        tool_name: str,
+        arguments: dict[str, Any],
+    ) -> Any:
+
+        params = (
+            self._server_parameters()
+        )
+
+        async with Client(
+            params
+        ) as client:
+
+            return await client.call_tool(
+                tool_name,
+                arguments,
+            )
+
+    # ========================================================
+    # AWS RUN SCRIPT
+    # ========================================================
 
     async def run_script(
         self,
         script: str,
     ) -> Any:
-        """
-        Dynamically finds AWS MCP's run_script tool and uses
-        the schema returned by the MCP server.
 
-        This prevents us from hard-coding an obsolete tool catalogue.
-        """
+        tool = await self.find_tool(
+            "run_script"
+        )
 
-        tool = await self.find_tool("run_script")
+        # MCP SDK versions may expose this as
+        # inputSchema or input_schema.
+        schema = (
+            getattr(
+                tool,
+                "inputSchema",
+                None,
+            )
+            or getattr(
+                tool,
+                "input_schema",
+                None,
+            )
+            or {}
+        )
 
-        schema = tool.input_schema or {}
+        properties = schema.get(
+            "properties",
+            {},
+        )
 
-        properties = schema.get("properties", {})
-
-        # Current AWS MCP normally exposes a script/code-type argument.
-        # We inspect the live schema instead of blindly assuming it.
         candidate_names = (
             "script",
             "code",
@@ -104,15 +189,18 @@ class AWSMCPClient:
         script_argument = next(
             (
                 name
-                for name in candidate_names
+                for name
+                in candidate_names
                 if name in properties
             ),
             None,
         )
 
         if not script_argument:
+
             raise RuntimeError(
-                "Unable to determine the run_script input argument. "
+                "Unable to determine AWS "
+                "run_script input argument. "
                 f"Tool schema: {schema}"
             )
 
@@ -121,4 +209,13 @@ class AWSMCPClient:
             {
                 script_argument: script,
             },
+        )
+
+    async def execute_aws_script(
+        self,
+        script: str,
+    ) -> Any:
+
+        return await self.run_script(
+            script
         )

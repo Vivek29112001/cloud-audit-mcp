@@ -859,4 +859,34 @@ The AI layer should operate against normalized cloud inventory rather than provi
 This project is intended for authorized cloud-security auditing only.
 
 Only connect accounts where the organization has explicit authorization to inspect the target cloud environment.
-"# cloud-audit-mcp" 
+"# cloud-audit-mcp"
+
+# AWS Phase 1 updated backend
+
+This bundle contains the corrected MCP-only AWS Phase-1 backend modules through
+the EC2/VPC/EBS deep-collector step.
+
+## Main fixes
+
+- `AwsCredentials` -> `AWSCredentials`
+- `AWSColectorRegistry` -> `AWSCollectorRegistry`
+- completed `EC2DeepCollector._collect_region()`
+- added EC2 instance, security-group, EBS, subnet and route-table collection
+- added `AWSDeepScanService`
+- added collector factory
+- added typed API request/response schemas
+- added `/api/aws/deep-scan`
+- normalized result parsing
+- kept AWS access through MCP only
+
+## Expected project paths
+
+Copy the `app/` folder content into your existing project while keeping your
+existing `app/core/config.py`.
+
+Your `app/main.py` should include:
+
+```python
+from fastapi import FastAPI
+from app.api.aws import router as aws_router
+```
