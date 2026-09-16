@@ -6,7 +6,7 @@ from typing import Any
 from app.providers.aws.credentials import AWSCredentials
 
 
-class AWSDeepCollector(ABC):
+class AWSMCPCollector(ABC):
     @property
     @abstractmethod
     def service_name(self) -> str:

@@ -9,6 +9,8 @@ from app.providers.aws.models import (
 )
 from app.providers.aws.result_parser import extract_mcp_result
 
+from app.providers.aws.mcp_scripts.regions import build_region_discovery_script
+
 
 class AWSRegionService:
 
@@ -19,36 +21,15 @@ class AWSRegionService:
 
         client = AWSMCPClient(credentials)
 
-        script = """
-response = await call_boto3(
-    service_name="ec2",
-    operation_name="DescribeRegions",
-    region_name="us-east-1",
-    params={
-        "AllRegions": True
-    }
-)
-
-regions = []
-
-for region in response.get("Regions", []):
-    regions.append({
-        "RegionName": region.get("RegionName"),
-        "Endpoint": region.get("Endpoint"),
-        "OptInStatus": region.get("OptInStatus"),
-    })
-
-result = {
-    "Regions": regions
-}
-
-result
-"""
+        script = build_region_discovery_script()
 
         try:
-            response = await client.execute_aws_script(
-                script
-            )
+            # response = await client.execute_aws_script(
+            #     script
+            # )
+            response = await client.run_aws_script(
+                            script
+                        )
 
         except Exception as exc:
             raise AWSMCPExecutionError(

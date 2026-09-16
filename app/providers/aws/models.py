@@ -94,6 +94,8 @@ class AWSSecurityGroup(BaseModel):
     description: str | None = None
 
     vpc_id: str | None = None
+    
+    region: str | None = None
 
     ingress_rules: list[
         AWSSecurityGroupRule
@@ -106,6 +108,8 @@ class AWSSecurityGroup(BaseModel):
 
 class AWSEBSVolume(BaseModel):
     volume_id: str
+    
+    region: str | None = None
 
     size_gb: int | None = None
 

@@ -11,6 +11,7 @@ from app.providers.aws.result_parser import (
     extract_mcp_result,
 )
 
+from app.providers.aws.mcp_scripts.zone import build_zone_discovery_script
 
 class AWSZoneService:
 
@@ -24,48 +25,17 @@ class AWSZoneService:
 
         # The Region list comes from AWS discovery.
         # It is NOT hard-coded.
-        script = f"""
-regions = {enabled_regions!r}
-
-all_zones = []
-
-for region in regions:
-
-    response = await call_boto3(
-        service_name="ec2",
-        operation_name="DescribeAvailabilityZones",
-        region_name=region,
-        params={{}}
-    )
-
-    for zone in response.get(
-        "AvailabilityZones",
-        []
-    ):
-        all_zones.append({{
-            "ZoneName": zone.get("ZoneName"),
-            "ZoneId": zone.get("ZoneId"),
-            "RegionName": zone.get("RegionName"),
-            "State": zone.get("State"),
-            "ZoneType": zone.get("ZoneType"),
-            "OptInStatus": zone.get(
-                "OptInStatus"
-            ),
-        }})
-
-result = {{
-    "AvailabilityZones": all_zones
-}}
-
-result
-"""
+        script = build_zone_discovery_script(
+            enabled_regions=enabled_regions
+        )
 
         try:
 
-            response = (
-                await client
-                .execute_aws_script(script)
-            )
+            # response = (
+            #     await client
+            #     .execute_aws_script(script)
+            # )
+            response = ( await client.run_aws_script(script) )
 
         except Exception as exc:
 

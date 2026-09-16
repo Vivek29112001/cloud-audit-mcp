@@ -14,6 +14,7 @@ from app.providers.aws.models import (
 from app.providers.aws.result_parser import (
     extract_mcp_result,
 )
+from app.providers.aws.mcp_scripts.resource_discovery import build_resource_discovery_script
 
 
 class AWSResourceDiscoveryService:
@@ -99,72 +100,23 @@ class AWSResourceDiscoveryService:
         region: str,
     ) -> list[AWSResource]:
 
-        script = f"""
-region = {region!r}
+        script = build_resource_discovery_script(
+            region=region
+        )
 
-resources = []
 
-next_token = None
-
-while True:
-
-    params = {{
-        "QueryString": "",
-        "MaxResults": 1000
-    }}
-
-    if next_token:
-        params["NextToken"] = next_token
-
-    response = await call_boto3(
-        service_name="resource-explorer-2",
-        operation_name="Search",
-        region_name=region,
-        params=params
-    )
-
-    for item in response.get(
-        "Resources",
-        []
-    ):
-        resources.append({{
-            "Arn": item.get("Arn"),
-            "Region": item.get("Region"),
-            "ResourceType": item.get(
-                "ResourceType"
-            ),
-            "Service": item.get(
-                "Service"
-            ),
-            "OwningAccountId": item.get(
-                "OwningAccountId"
-            ),
-            "Properties": item.get(
-                "Properties",
-                []
-            ),
-        }})
-
-    next_token = response.get(
-        "NextToken"
-    )
-
-    if not next_token:
-        break
-
-result = {{
-    "Resources": resources
-}}
-
-result
-"""
 
         try:
 
+            # response = (
+            #     await client
+            #     .execute_aws_script(script)
+            # )
+            
             response = (
-                await client
-                .execute_aws_script(script)
-            )
+                            await client
+                            .run_aws_script(script)
+                        )
 
         except Exception as exc:
 

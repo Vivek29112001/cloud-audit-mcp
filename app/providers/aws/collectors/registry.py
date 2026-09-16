@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from app.providers.aws.collectors.base import AWSDeepCollector
+from app.providers.aws.collectors.base import AWSMCPCollector
 
 
 class AWSCollectorRegistry:
     def __init__(
         self,
-        collectors: list[AWSDeepCollector],
+        collectors: list[AWSMCPCollector],
     ) -> None:
         self._collectors = {
             collector.service_name.lower(): collector
@@ -16,7 +16,7 @@ class AWSCollectorRegistry:
     def get(
         self,
         service_name: str,
-    ) -> AWSDeepCollector | None:
+    ) -> AWSMCPCollector | None:
         return self._collectors.get(service_name.lower())
 
     def available_services(self) -> list[str]:

@@ -870,7 +870,7 @@ the EC2/VPC/EBS deep-collector step.
 
 - `AwsCredentials` -> `AWSCredentials`
 - `AWSColectorRegistry` -> `AWSCollectorRegistry`
-- completed `EC2DeepCollector._collect_region()`
+- completed `EC2MCPCollector._collect_region()`
 - added EC2 instance, security-group, EBS, subnet and route-table collection
 - added `AWSDeepScanService`
 - added collector factory
