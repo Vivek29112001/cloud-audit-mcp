@@ -150,3 +150,11 @@ class AWSDeepScanResponse(BaseModel):
 
 class AWSZoneDiscoveryRequest(AWSVerifyRequest):
     enabled_regions: list[str]
+
+
+class AWSNaturalLanguageQueryRequest(
+    AWSVerifyRequest
+):
+    question: str
+
+    scan_result: dict

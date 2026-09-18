@@ -8,43 +8,66 @@ from app.providers.aws.models import (
     AWSRegionDiscoveryResult,
 )
 from app.providers.aws.result_parser import extract_mcp_result
-
-from app.providers.aws.mcp_scripts.regions import build_region_discovery_script
+from app.providers.aws.mcp_scripts.regions import (
+    build_region_discovery_script,
+)
 
 
 class AWSRegionService:
 
     async def discover_regions(
         self,
-        credentials: AWSCredentials,
+        credentials: AWSCredentials | None = None,
+        *,
+        mcp: AWSMCPClient | None = None,
     ) -> AWSRegionDiscoveryResult:
+        """
+        Discover AWS Regions.
 
-        client = AWSMCPClient(credentials)
+        During the baseline scan, pass the already-open MCP session
+        so the proxy/session is not recreated for this stage.
+        """
+
+        if mcp is None:
+            if credentials is None:
+                raise ValueError(
+                    "Either credentials or an open AWSMCPClient "
+                    "session is required."
+                )
+
+            async with AWSMCPClient(
+                credentials
+            ) as session:
+                return await self.discover_regions(
+                    mcp=session
+                )
 
         script = build_region_discovery_script()
 
         try:
-            # response = await client.execute_aws_script(
-            #     script
-            # )
-            response = await client.run_aws_script(
-                            script
-                        )
+            response = await mcp.run_aws_script(
+                script
+            )
 
         except Exception as exc:
             raise AWSMCPExecutionError(
                 f"Unable to discover AWS Regions: {exc}"
             ) from exc
 
-        parsed = extract_mcp_result(response)
+        parsed = extract_mcp_result(
+            response
+        )
 
-        regions_data = self._find_regions(parsed)
+        regions_data = self._find_regions(
+            parsed
+        )
 
         regions: list[AWSRegion] = []
 
         for item in regions_data:
-
-            region_name = item.get("RegionName")
+            region_name = item.get(
+                "RegionName"
+            )
 
             if not region_name:
                 continue
@@ -70,7 +93,9 @@ class AWSRegionService:
             )
 
         regions.sort(
-            key=lambda region: region.region_name
+            key=lambda region: (
+                region.region_name
+            )
         )
 
         enabled_count = sum(
@@ -92,31 +117,35 @@ class AWSRegionService:
     def _find_regions(
         value: object,
     ) -> list[dict]:
-
         if isinstance(value, dict):
+            regions = value.get(
+                "Regions"
+            )
 
-            regions = value.get("Regions")
-
-            if isinstance(regions, list):
+            if isinstance(
+                regions,
+                list,
+            ):
                 return regions
 
             for child in value.values():
-
                 result = (
                     AWSRegionService
-                    ._find_regions(child)
+                    ._find_regions(
+                        child
+                    )
                 )
 
                 if result:
                     return result
 
         elif isinstance(value, list):
-
             for child in value:
-
                 result = (
                     AWSRegionService
-                    ._find_regions(child)
+                    ._find_regions(
+                        child
+                    )
                 )
 
                 if result:

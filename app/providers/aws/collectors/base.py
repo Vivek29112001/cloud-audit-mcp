@@ -18,4 +18,5 @@ class AWSMCPCollector(ABC):
         credentials: AWSCredentials,
         regions: list[str],
     ) -> dict[str, Any]:
-        """Perform deep configuration collection."""
+        """  Collect configuration only through
+        the official AWS Managed MCP Server."""

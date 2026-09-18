@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from collections import defaultdict
 from typing import Any
 
@@ -14,16 +15,35 @@ from app.providers.aws.models import (
 from app.providers.aws.result_parser import (
     extract_mcp_result,
 )
-from app.providers.aws.mcp_scripts.resource_discovery import build_resource_discovery_script
+from app.providers.aws.mcp_scripts.resource_discovery import (
+    build_resource_discovery_script,
+)
 
 
 class AWSResourceDiscoveryService:
+    """
+    Lightweight Resource Explorer discovery.
+
+    Important:
+    - Uses the already-open MCP session when provided.
+    - Searches Regions with bounded concurrency instead of sequentially.
+    - Does not perform service-specific deep scanning.
+    """
+
+    MAX_CONCURRENT_REGIONS = 5
 
     async def discover_resources(
         self,
-        credentials: AWSCredentials,
-        enabled_regions: list[str],
+        credentials: AWSCredentials | None = None,
+        enabled_regions: list[str] | None = None,
+        *,
+        mcp: AWSMCPClient | None = None,
     ) -> AWSResourceDiscoveryResult:
+
+        enabled_regions = (
+            enabled_regions
+            or []
+        )
 
         if not enabled_regions:
             return AWSResourceDiscoveryResult(
@@ -36,29 +56,86 @@ class AWSResourceDiscoveryService:
                 ],
             )
 
-        client = AWSMCPClient(credentials)
+        if mcp is None:
+            if credentials is None:
+                raise ValueError(
+                    "Either credentials or an open AWSMCPClient "
+                    "session is required."
+                )
 
-        all_resources: list[AWSResource] = []
+            async with AWSMCPClient(
+                credentials
+            ) as session:
+                return await self.discover_resources(
+                    enabled_regions=enabled_regions,
+                    mcp=session,
+                )
+
+        semaphore = asyncio.Semaphore(
+            self.MAX_CONCURRENT_REGIONS
+        )
+
+        async def discover_region(
+            region: str,
+        ) -> tuple[
+            str,
+            list[AWSResource] | None,
+            Exception | None,
+        ]:
+            async with semaphore:
+                try:
+                    resources = (
+                        await self._discover_region(
+                            client=mcp,
+                            region=region,
+                        )
+                    )
+
+                    return (
+                        region,
+                        resources,
+                        None,
+                    )
+
+                except Exception as exc:
+                    return (
+                        region,
+                        None,
+                        exc,
+                    )
+
+        regional_results = await asyncio.gather(
+            *[
+                discover_region(
+                    region
+                )
+                for region
+                in enabled_regions
+            ]
+        )
+
+        all_resources: list[
+            AWSResource
+        ] = []
+
         warnings: list[str] = []
 
-        for region in enabled_regions:
+        for (
+            region,
+            regional_resources,
+            error,
+        ) in regional_results:
 
-            try:
-                regional_resources = (
-                    await self._discover_region(
-                        client=client,
-                        region=region,
-                    )
+            if error is not None:
+                warnings.append(
+                    "Resource discovery failed "
+                    f"for {region}: {error}"
                 )
+                continue
 
+            if regional_resources:
                 all_resources.extend(
                     regional_resources
-                )
-
-            except Exception as exc:
-                warnings.append(
-                    f"Resource discovery failed "
-                    f"for {region}: {exc}"
                 )
 
         all_resources = (
@@ -70,7 +147,8 @@ class AWSResourceDiscoveryService:
         used_regions = sorted(
             {
                 resource.region
-                for resource in all_resources
+                for resource
+                in all_resources
                 if resource.region
                 and resource.region != "global"
             }
@@ -100,28 +178,23 @@ class AWSResourceDiscoveryService:
         region: str,
     ) -> list[AWSResource]:
 
-        script = build_resource_discovery_script(
-            region=region
+        script = (
+            build_resource_discovery_script(
+                region=region
+            )
         )
 
-
-
         try:
-
-            # response = (
-            #     await client
-            #     .execute_aws_script(script)
-            # )
-            
             response = (
-                            await client
-                            .run_aws_script(script)
-                        )
+                await client
+                .run_aws_script(
+                    script
+                )
+            )
 
         except Exception as exc:
-
             raise AWSMCPExecutionError(
-                f"Resource Explorer search "
+                "Resource Explorer search "
                 f"failed in {region}: {exc}"
             ) from exc
 
@@ -135,11 +208,15 @@ class AWSResourceDiscoveryService:
             )
         )
 
-        result: list[AWSResource] = []
+        result: list[
+            AWSResource
+        ] = []
 
         for item in raw_resources:
 
-            arn = item.get("Arn")
+            arn = item.get(
+                "Arn"
+            )
 
             result.append(
                 AWSResource(
@@ -186,8 +263,10 @@ class AWSResourceDiscoveryService:
         value: Any,
     ) -> list[dict[str, Any]]:
 
-        if isinstance(value, dict):
-
+        if isinstance(
+            value,
+            dict,
+        ):
             resources = value.get(
                 "Resources"
             )
@@ -199,22 +278,26 @@ class AWSResourceDiscoveryService:
                 return resources
 
             for child in value.values():
-
                 found = (
                     AWSResourceDiscoveryService
-                    ._find_resources(child)
+                    ._find_resources(
+                        child
+                    )
                 )
 
                 if found:
                     return found
 
-        elif isinstance(value, list):
-
+        elif isinstance(
+            value,
+            list,
+        ):
             for child in value:
-
                 found = (
                     AWSResourceDiscoveryService
-                    ._find_resources(child)
+                    ._find_resources(
+                        child
+                    )
                 )
 
                 if found:
@@ -235,7 +318,9 @@ class AWSResourceDiscoveryService:
             maxsplit=5,
         )
 
-        if len(resource_part) < 6:
+        if len(
+            resource_part
+        ) < 6:
             return arn
 
         value = resource_part[5]
@@ -256,7 +341,9 @@ class AWSResourceDiscoveryService:
 
     @staticmethod
     def _deduplicate_resources(
-        resources: list[AWSResource],
+        resources: list[
+            AWSResource
+        ],
     ) -> list[AWSResource]:
 
         unique: dict[
@@ -271,7 +358,6 @@ class AWSResourceDiscoveryService:
         for resource in resources:
 
             if resource.arn:
-
                 unique[
                     resource.arn
                 ] = resource
@@ -282,14 +368,20 @@ class AWSResourceDiscoveryService:
                 )
 
         return (
-            list(unique.values())
+            list(
+                unique.values()
+            )
             + anonymous
         )
 
     @staticmethod
     def _build_service_summary(
-        resources: list[AWSResource],
-    ) -> list[AWSDetectedService]:
+        resources: list[
+            AWSResource
+        ],
+    ) -> list[
+        AWSDetectedService
+    ]:
 
         counts: dict[
             str,
@@ -312,10 +404,14 @@ class AWSResourceDiscoveryService:
                 .lower()
             )
 
-            counts[service] += 1
+            counts[
+                service
+            ] += 1
 
             if resource.region:
-                regions[service].add(
+                regions[
+                    service
+                ].add(
                     resource.region
                 )
 
@@ -324,7 +420,9 @@ class AWSResourceDiscoveryService:
                 service=service,
                 resource_count=count,
                 regions=sorted(
-                    regions[service]
+                    regions[
+                        service
+                    ]
                 ),
             )
             for service, count

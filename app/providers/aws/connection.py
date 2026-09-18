@@ -25,15 +25,38 @@ class AWSConnectionService:
 
     async def verify_credentials(
         self,
-        credentials: AWSCredentials,
+        credentials: AWSCredentials | None = None,
+        *,
+        mcp: AWSMCPClient | None = None,
     ) -> AWSIdentity:
+        """
+        Verify AWS identity through the official AWS MCP Server.
 
-        client = AWSMCPClient(credentials)
+        Preferred discovery usage:
+            verify_credentials(mcp=existing_session)
+
+        Existing standalone usage is still supported:
+            verify_credentials(credentials)
+        """
+
+        if mcp is None:
+            if credentials is None:
+                raise ValueError(
+                    "Either credentials or an open AWSMCPClient "
+                    "session is required."
+                )
+
+            async with AWSMCPClient(
+                credentials
+            ) as session:
+                return await self.verify_credentials(
+                    mcp=session
+                )
 
         script = build_identity_script()
 
         try:
-            response = await client.run_aws_script(
+            response = await mcp.run_aws_script(
                 script
             )
 

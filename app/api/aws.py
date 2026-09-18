@@ -19,7 +19,7 @@ from app.api.schemas.aws import (
 )
 from app.providers.aws.connection import AWSConnectionService
 from app.providers.aws.credentials import AWSCredentials
-from app.providers.aws.deep_scan import AWSDeepScanService
+# from app.providers.aws.deep_scan import AWSDeepScanService
 from app.providers.aws.discovery import AWSResourceDiscoveryService
 from app.providers.aws.exceptions import (
     AWSMCPExecutionError,
@@ -30,6 +30,24 @@ from app.providers.aws.regions import AWSRegionService
 from app.providers.aws.zones import AWSZoneService
 
 from app.providers.aws.scanner import AWSScanOrchestrator
+
+
+from app.ai.query_router import (
+    AWSQueryRouter,
+)
+from app.api.schemas.aws import (
+    AWSNaturalLanguageQueryRequest,
+)
+
+
+import logging
+
+from fastapi import HTTPException
+
+
+logger = logging.getLogger(__name__)
+
+
 
 router = APIRouter(
     prefix="/aws",
@@ -392,30 +410,30 @@ async def discover_aws_resources(
     )
     
     
-@router.post("/deep-scan", response_model=AWSDeepScanResponse)
-async def deep_scan_aws(
-    request: AWSDeepScanRequest,
-) -> AWSDeepScanResponse:
-    credentials = _credentials_from_request(request)
+# @router.post("/deep-scan", response_model=AWSDeepScanResponse)
+# async def deep_scan_aws(
+#     request: AWSDeepScanRequest,
+# ) -> AWSDeepScanResponse:
+#     credentials = _credentials_from_request(request)
 
-    detected_services = [
-        AWSDetectedService(
-            service=item.service,
-            resource_count=item.resource_count,
-            regions=item.regions,
-        )
-        for item in request.detected_services
-    ]
+#     detected_services = [
+#         AWSDetectedService(
+#             service=item.service,
+#             resource_count=item.resource_count,
+#             regions=item.regions,
+#         )
+#         for item in request.detected_services
+#     ]
 
-    result = await AWSDeepScanService().scan(
-        credentials=credentials,
-        detected_services=detected_services,
-    )
+#     result = await AWSDeepScanService().scan(
+#         credentials=credentials,
+#         detected_services=detected_services,
+#     )
 
-    return AWSDeepScanResponse(
-        services=result.services,
-        warnings=result.warnings,
-    )
+#     return AWSDeepScanResponse(
+#         services=result.services,
+#         warnings=result.warnings,
+#     )
     
     
 @router.post(
@@ -448,4 +466,81 @@ async def run_aws_scan(
     ) 
     
     
+# @router.post(
+#     "/query"
+# )
+# async def query_aws(
+#     request: AWSNaturalLanguageQueryRequest,
+# ):
+#     credentials = AWSCredentials(
+#         access_key_id=(
+#             request.access_key_id
+#         ),
+#         secret_access_key=(
+#             request.secret_access_key
+#         ),
+#         session_token=(
+#             request.session_token
+#         ),
+#     )
+
+#     router = AWSQueryRouter()
+
+#     return await router.execute(
+#         question=request.question,
+#         credentials=credentials,
+#         scan_result=request.scan_result,
+#     )  
+    
+  
+@router.post("/query")
+async def query_aws(
+    request: AWSNaturalLanguageQueryRequest,
+):
+    try:
+
+        credentials = AWSCredentials(
+            access_key_id=(
+                request.access_key_id
+            ),
+            secret_access_key=(
+                request.secret_access_key
+            ),
+            session_token=(
+                request.session_token
+            ),
+        )
+
+        router = AWSQueryRouter()
+
+        result = await router.execute(
+            question=request.question,
+            credentials=credentials,
+            scan_result=request.scan_result,
+        )
+
+        logger.info(
+            "AWS NLP query completed. "
+            "question=%s status=%s",
+            request.question,
+            result.get("status"),
+        )
+
+        return result
+
+    except Exception as exc:
+
+        logger.exception(
+            "AWS NLP query failed. "
+            "question=%s",
+            request.question,
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"AWS query failed: "
+                f"{type(exc).__name__}: {exc}"
+            ),
+        ) from exc
     

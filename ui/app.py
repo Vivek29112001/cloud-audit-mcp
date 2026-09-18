@@ -1,3 +1,5 @@
+from time import perf_counter
+
 import requests
 import streamlit as st
 
@@ -21,6 +23,166 @@ st.set_page_config(
     page_icon="🔐",
     layout="wide",
 )
+
+
+# ============================================================
+# APPLICATION UI THEME - TEMPLATE 1
+# UI ONLY: backend/API/session logic remains unchanged.
+# ============================================================
+
+st.markdown(
+    """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header[data-testid="stHeader"] {background: transparent;}
+
+    .stApp {
+        background: #f5f7fb;
+    }
+
+    .block-container {
+        max-width: 1450px;
+        padding-top: 1.4rem;
+        padding-bottom: 2rem;
+    }
+
+    section[data-testid="stSidebar"] {
+        background:
+            linear-gradient(180deg, #10253f 0%, #0c1d33 55%, #09182a 100%);
+        border-right: 1px solid rgba(255,255,255,0.07);
+    }
+
+    section[data-testid="stSidebar"] * {
+        color: #f7faff;
+    }
+
+    section[data-testid="stSidebar"] .stButton > button {
+        width: 100%;
+        text-align: left;
+        justify-content: flex-start;
+        border: 1px solid transparent;
+        background: transparent;
+        color: #e8eef7;
+        border-radius: 10px;
+        padding: 0.7rem 0.85rem;
+        font-weight: 600;
+    }
+
+    section[data-testid="stSidebar"] .stButton > button:hover {
+        background: rgba(80, 145, 255, 0.17);
+        border-color: rgba(120, 169, 255, 0.22);
+    }
+
+    .overview-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #0d1b32;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+        margin: 0;
+    }
+
+    .overview-subtitle {
+        color: #64748b;
+        margin-top: 0.35rem;
+        font-size: 0.98rem;
+    }
+
+    .ready-pill {
+        display: inline-block;
+        padding: 0.55rem 0.9rem;
+        border-radius: 10px;
+        background: #dff8ee;
+        color: #078b63;
+        font-weight: 700;
+        font-size: 0.9rem;
+        border: 1px solid #c8f0e2;
+    }
+
+    .status-pill {
+        display: inline-block;
+        padding: 0.45rem 0.8rem;
+        border-radius: 999px;
+        background: #edf4ff;
+        color: #2563eb;
+        font-weight: 700;
+        font-size: 0.84rem;
+    }
+
+    div[data-testid="stMetric"] {
+        background: #ffffff;
+        border: 1px solid #dfe7f2;
+        border-radius: 14px;
+        padding: 1.1rem 1rem;
+        box-shadow: 0 3px 12px rgba(25, 53, 88, 0.04);
+        min-height: 132px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+    }
+
+    div[data-testid="stMetric"] label {
+        justify-content: center;
+        color: #51627a !important;
+        font-weight: 700 !important;
+    }
+
+    div[data-testid="stMetricValue"] {
+        color: #0e1c35;
+        font-weight: 800;
+    }
+
+    .stButton > button {
+        border-radius: 10px;
+        min-height: 42px;
+        font-weight: 700;
+    }
+
+    div[data-testid="stForm"] {
+        background: #ffffff;
+        border: 1px solid #dfe7f2;
+        border-radius: 16px;
+        padding: 1.15rem;
+        box-shadow: 0 4px 18px rgba(24,49,83,0.045);
+    }
+
+    .chat-heading {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #10213b;
+        margin-bottom: 0.15rem;
+    }
+
+    .chat-subtitle {
+        color: #718096;
+        font-size: 0.92rem;
+        margin-bottom: 0.8rem;
+    }
+
+    div[data-testid="stChatMessage"] {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 0.65rem 0.85rem;
+        margin-bottom: 0.65rem;
+    }
+
+    div[data-testid="stChatInput"] {
+        background: #ffffff;
+        border-top: 1px solid #e4eaf2;
+        padding-top: 0.6rem;
+    }
+
+    hr {
+        border-color: #e7edf4;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 
 # ============================================================
@@ -91,14 +253,14 @@ def verify_aws_account(
 
 
 # ============================================================
-# FULL AWS INFRASTRUCTURE SCAN API
+# LIGHTWEIGHT AWS DISCOVERY SCAN API
 # ============================================================
 
 def run_aws_scan(
     credentials: dict,
 ) -> dict | None:
     """
-    Run the complete AWS infrastructure scan.
+    Run the lightweight AWS discovery scan.
 
     The frontend does not orchestrate AWS service calls.
 
@@ -116,7 +278,7 @@ def run_aws_scan(
 
     try:
         with st.spinner(
-            "Scanning AWS infrastructure through "
+            "Discovering AWS Regions, Zones and services through "
             "the official AWS Managed MCP Server..."
         ):
             response = requests.post(
@@ -129,7 +291,7 @@ def run_aws_scan(
             st.error(
                 get_error_detail(
                     response,
-                    "AWS infrastructure scan failed.",
+                    "AWS discovery scan failed.",
                 )
             )
             return None
@@ -138,9 +300,96 @@ def run_aws_scan(
 
     except requests.RequestException as exc:
         st.error(
-            f"AWS infrastructure scan failed: {exc}"
+            f"AWS discovery scan failed: {exc}"
         )
         return None
+
+
+
+# ============================================================
+# AWS NLP QUERY API
+# ============================================================
+
+def query_aws_account(
+    credentials: dict,
+    question: str,
+    scan_result: dict,
+) -> dict | None:
+    """
+    Send a natural-language AWS question to the backend.
+
+    The backend remains the source of truth for query timing.
+    We also measure the complete Streamlit -> FastAPI -> Streamlit
+    round-trip so network/UI overhead is visible during development.
+    """
+
+    payload = {
+        **credentials,
+        "question": question,
+        "scan_result": scan_result,
+    }
+
+    request_started = perf_counter()
+
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/aws/query",
+            json=payload,
+            timeout=FULL_SCAN_TIMEOUT,
+        )
+
+        round_trip_seconds = round(
+            perf_counter() - request_started,
+            2,
+        )
+
+        try:
+            body = response.json()
+        except ValueError:
+            body = {
+                "status": "ERROR",
+                "answer": (
+                    f"HTTP {response.status_code}: {response.text}"
+                ),
+            }
+
+        if not isinstance(body, dict):
+            body = {
+                "status": "ERROR",
+                "answer": str(body),
+            }
+
+        # Frontend/network timing is supplemental.
+        body["client_round_trip_seconds"] = round_trip_seconds
+
+        if response.status_code != 200:
+            detail = body.get("detail")
+
+            return {
+                **body,
+                "status": str(
+                    body.get("status", "ERROR")
+                ).upper(),
+                "answer": str(
+                    detail
+                    or body.get("answer")
+                    or "Unable to process the AWS question."
+                ),
+                "raw": body,
+                "client_round_trip_seconds": round_trip_seconds,
+            }
+
+        return body
+
+    except requests.RequestException as exc:
+        return {
+            "status": "ERROR",
+            "answer": f"AWS query failed: {exc}",
+            "client_round_trip_seconds": round(
+                perf_counter() - request_started,
+                2,
+            ),
+        }
 
 
 # ============================================================
@@ -157,6 +406,7 @@ def clear_aws_session() -> None:
         "aws_connection",
         "aws_credentials",
         "aws_scan",
+        "aws_chat_history",
     ):
         st.session_state.pop(
             key,
@@ -171,6 +421,10 @@ def clear_scan_results() -> None:
 
     st.session_state.pop(
         "aws_scan",
+        None,
+    )
+    st.session_state.pop(
+        "aws_chat_history",
         None,
     )
 
@@ -514,231 +768,8 @@ def render_resource_inventory(
         )
 
 
-def render_ec2_deep_scan(
-    ec2_data: dict,
-) -> None:
-    """
-    Render EC2/VPC/EBS deep scan results.
-    """
-
-    instances = ec2_data.get(
-        "instances",
-        [],
-    )
-
-    security_groups = ec2_data.get(
-        "security_groups",
-        [],
-    )
-
-    volumes = ec2_data.get(
-        "volumes",
-        [],
-    )
-
-    subnets = ec2_data.get(
-        "subnets",
-        [],
-    )
-
-    route_tables = ec2_data.get(
-        "route_tables",
-        [],
-    )
-
-    st.markdown(
-        "### EC2 / VPC"
-    )
-
-    metric_col1, metric_col2, metric_col3 = (
-        st.columns(3)
-    )
-
-    with metric_col1:
-        st.metric(
-            "EC2 Instances",
-            len(instances),
-        )
-
-    with metric_col2:
-        st.metric(
-            "Security Groups",
-            len(security_groups),
-        )
-
-    with metric_col3:
-        st.metric(
-            "EBS Volumes",
-            len(volumes),
-        )
-
-    network_col1, network_col2 = (
-        st.columns(2)
-    )
-
-    with network_col1:
-        st.metric(
-            "Subnets",
-            len(subnets),
-        )
-
-    with network_col2:
-        st.metric(
-            "Route Tables",
-            len(route_tables),
-        )
-
-    with st.expander(
-        "EC2 Instances",
-        expanded=True,
-    ):
-        if instances:
-            st.dataframe(
-                instances,
-                use_container_width=True,
-                hide_index=True,
-            )
-        else:
-            st.info(
-                "No EC2 instances were returned."
-            )
-
-    with st.expander(
-        "Security Groups"
-    ):
-        if security_groups:
-            st.json(
-                security_groups
-            )
-        else:
-            st.info(
-                "No security groups were returned."
-            )
-
-    with st.expander(
-        "EBS Volumes"
-    ):
-        if volumes:
-            st.dataframe(
-                volumes,
-                use_container_width=True,
-                hide_index=True,
-            )
-        else:
-            st.info(
-                "No EBS volumes were returned."
-            )
-
-    with st.expander(
-        "Subnets"
-    ):
-        if subnets:
-            st.dataframe(
-                subnets,
-                use_container_width=True,
-                hide_index=True,
-            )
-        else:
-            st.info(
-                "No subnets were returned."
-            )
-
-    with st.expander(
-        "Route Tables"
-    ):
-        if route_tables:
-            st.json(
-                route_tables
-            )
-        else:
-            st.info(
-                "No route tables were returned."
-            )
-
-    ec2_warnings = ec2_data.get(
-        "warnings",
-        [],
-    )
-
-    if ec2_warnings:
-        with st.expander(
-            "EC2 Collector Warnings"
-        ):
-            for warning in ec2_warnings:
-                st.warning(
-                    warning
-                )
-
-
-def render_generic_deep_service(
-    service_name: str,
-    service_data,
-) -> None:
-    """
-    Generic renderer for future S3/RDS/IAM/Lambda collectors.
-    """
-
-    st.markdown(
-        f"### {service_name.upper()}"
-    )
-
-    if isinstance(
-        service_data,
-        dict,
-    ):
-        st.json(
-            service_data
-        )
-    else:
-        st.write(
-            service_data
-        )
-
-
-def render_deep_scan(
-    deep_scan_data: dict | None,
-) -> None:
-    """
-    Render service-specific detailed scan results.
-    """
-
-    if not deep_scan_data:
-        return
-
-    st.divider()
-
-    st.subheader(
-        "Deep Configuration Scan"
-    )
-
-    services = deep_scan_data.get(
-        "services",
-        {},
-    )
-
-    if not services:
-        st.info(
-            "No service-specific deep scan results are available yet."
-        )
-        return
-
-    for service_name, service_data in services.items():
-        if (
-            service_name.lower()
-            == "ec2"
-            and isinstance(
-                service_data,
-                dict,
-            )
-        ):
-            render_ec2_deep_scan(
-                service_data
-            )
-        else:
-            render_generic_deep_service(
-                service_name,
-                service_data,
-            )
+# Deep service scan renderers removed. Detailed configuration is queried
+# on demand through the NLP -> generic read-only AWS MCP query flow.
 
 
 def render_scan_status(
@@ -747,7 +778,6 @@ def render_scan_status(
     region_data: dict | None,
     zone_data: dict | None,
     resource_data: dict | None,
-    deep_scan_data: dict | None,
 ) -> None:
     """
     Render the current scan pipeline status.
@@ -760,15 +790,6 @@ def render_scan_status(
 
     st.subheader(
         "Scan Status"
-    )
-
-    deep_services = (
-        deep_scan_data.get(
-            "services",
-            {},
-        )
-        if deep_scan_data
-        else {}
     )
 
     status_data = [
@@ -823,14 +844,6 @@ def render_scan_status(
                 else "Pending"
             ),
         },
-        {
-            "stage": "Deep Configuration Scan",
-            "status": (
-                "Completed"
-                if deep_services
-                else "Pending"
-            ),
-        },
     ]
 
     st.dataframe(
@@ -840,488 +853,755 @@ def render_scan_status(
     )
 
 
-# ============================================================
-# HEADER
-# ============================================================
-
-st.title(
-    "XYZ AWS Cloud Auditor"
-)
-
-st.caption(
-    "Dynamic AWS infrastructure discovery through "
-    "the official AWS Managed MCP Server."
-)
-
-st.info(
-    "AWS scanning is orchestrated by the backend. "
-    "The UI does not directly call AWS APIs, boto3, "
-    "or AWS CLI commands."
-)
-
 
 # ============================================================
-# AWS CONNECTION FORM
+# TEMPLATE 1 APPLICATION UI HELPERS
 # ============================================================
 
-with st.form(
-    "aws_connection_form"
-):
-    st.subheader(
-        "Connect AWS Account"
-    )
-
-    access_key_id = st.text_input(
-        "AWS Access Key ID",
-        placeholder="AKIA...",
-    )
-
-    secret_access_key = st.text_input(
-        "AWS Secret Access Key",
-        type="password",
-    )
-
-    session_token = st.text_area(
-        "AWS Session Token (optional)",
-        height=100,
-    )
-
-    connect = st.form_submit_button(
-        "Verify AWS Account",
-        type="primary",
-        use_container_width=True,
-    )
-
-
-# ============================================================
-# VERIFY AWS ACCOUNT
-# ============================================================
-
-if connect:
-    if (
-        not access_key_id
-        or not secret_access_key
-    ):
-        st.error(
-            "Access Key ID and Secret Access Key "
-            "are required."
+def render_app_sidebar(
+    aws_connection: dict | None,
+    scan_data: dict | None,
+) -> None:
+    with st.sidebar:
+        st.markdown(
+            """
+            <div style="padding:0.45rem 0 1.1rem 0;">
+                <div style="font-size:1.35rem;font-weight:800;">☁️ AWS AI Auditor</div>
+                <div style="font-size:0.78rem;color:#9fb1c8;margin-top:0.2rem;">
+                    Cloud discovery & live AI queries
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-    else:
-        credentials_payload = {
-            "access_key_id": (
-                access_key_id.strip()
-            ),
-            "secret_access_key": (
-                secret_access_key
-            ),
-            "session_token": (
-                session_token.strip()
-                if session_token.strip()
-                else None
-            ),
-        }
+        st.button("⌂  Home", use_container_width=True, key="nav_home")
+        st.button("⎋  Connect", use_container_width=True, key="nav_connect")
+        st.button("⌕  Discovery", use_container_width=True, key="nav_discovery")
+        st.button("◌  Chat", use_container_width=True, key="nav_chat")
+        st.button("⚙  Settings", use_container_width=True, key="nav_settings")
 
-        verification_data = verify_aws_account(
-            credentials_payload
-        )
+        st.markdown("<div style='height:22rem'></div>", unsafe_allow_html=True)
 
-        if verification_data:
-            # A newly verified account invalidates
-            # results from any previous AWS account.
-            clear_scan_results()
-
-            st.session_state[
-                "aws_connection"
-            ] = verification_data
-
-            # For the POC, credentials remain only in the
-            # active Streamlit session. They are not rendered
-            # back to the user and should not be logged.
-            st.session_state[
-                "aws_credentials"
-            ] = credentials_payload
-
-            st.success(
-                "AWS account verified successfully."
+        if aws_connection:
+            st.markdown(
+                f"""
+                <div style="
+                    border-top:1px solid rgba(255,255,255,.12);
+                    padding-top:1rem;
+                    font-size:.82rem;
+                    color:#c9d5e5;
+                ">
+                    <div style="font-weight:700;color:#fff;">Connected AWS Account</div>
+                    <div style="margin-top:.3rem;">{aws_connection.get("account_id", "-")}</div>
+                    <div style="margin-top:.2rem;color:#79e2b8;">
+                        ● {aws_connection.get("connection_status", "VERIFIED")}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
+        if scan_data:
+            st.markdown(
+                f"""
+                <div style="margin-top:.7rem;font-size:.78rem;color:#aebed3;">
+                    Discovery: {scan_data.get("status", "UNKNOWN")}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+
+def render_template1_overview(
+    aws_connection: dict,
+    scan_data: dict,
+) -> None:
+    summary = scan_data.get("summary", {}) or {}
+    account = scan_data.get("account", {}) or {}
+
+    account_id = (
+        account.get("account_id")
+        or aws_connection.get("account_id")
+        or "-"
+    )
+
+    status = scan_data.get("status", "UNKNOWN")
+    ready = status == "COMPLETED"
+
+    top_left, top_right = st.columns([5, 1.35])
+
+    with top_left:
+        st.markdown(
+            f"""
+            <div class="overview-title">AWS Infrastructure Overview</div>
+            <div class="overview-subtitle">
+                Connected account: {account_id}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with top_right:
+        if ready:
+            st.markdown(
+                '<div class="ready-pill">✓ Ready for AI Assistant</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                f'<div class="status-pill">{status}</div>',
+                unsafe_allow_html=True,
+            )
+
+    st.write("")
+
+    metric_cols = st.columns(4)
+
+    with metric_cols[0]:
+        st.metric(
+            "🌐 Regions",
+            summary.get("enabled_regions", 0),
+        )
+
+    with metric_cols[1]:
+        st.metric(
+            "▱ Availability Zones",
+            summary.get("availability_zones", 0),
+        )
+
+    with metric_cols[2]:
+        st.metric(
+            "◇ Services",
+            summary.get("detected_services", 0),
+        )
+
+    with metric_cols[3]:
+        st.metric(
+            "▤ Resources",
+            summary.get("discovered_resources", 0),
+        )
+
+
+def _query_status_label(result: dict | None) -> str:
+    """Return a compact backend query status for the evidence panel."""
+    if not result:
+        return "NO_RESPONSE"
+
+    return str(
+        result.get("status", "UNKNOWN")
+    ).upper()
+
+
+def _format_seconds(
+    value: object,
+) -> str | None:
+    """Safely format an arbitrary timing value as seconds."""
+    try:
+        seconds = float(value)
+    except (TypeError, ValueError):
+        return None
+
+    if seconds < 0:
+        return None
+
+    return f"{seconds:.2f}"
+
+
+def _render_query_timing(
+    result: dict | None,
+) -> None:
+    """
+    Show the user the backend response time and expose the detailed
+    timing breakdown only in an expandable developer view.
+    """
+    if not result:
+        return
+
+    backend_seconds = _format_seconds(
+        result.get("response_time_seconds")
+    )
+
+    round_trip_seconds = _format_seconds(
+        result.get("client_round_trip_seconds")
+    )
+
+    if backend_seconds is not None:
+        st.caption(
+            f"⏱ Answered in {backend_seconds} seconds"
+        )
+    elif round_trip_seconds is not None:
+        # Fallback for older backend responses that do not yet return timing.
+        st.caption(
+            f"⏱ Response received in {round_trip_seconds} seconds"
+        )
+
+    timings = result.get("timings") or {}
+
+    if not timings and round_trip_seconds is None:
+        return
+
+    with st.expander(
+        "Performance details",
+        expanded=False,
+    ):
+        if timings:
+            timing_rows = []
+
+            labels = {
+                "intent_ms": "Groq query planning",
+                "aws_mcp_ms": "AWS MCP execution",
+                "answer_ms": "Groq answer formatting",
+                "total_ms": "Backend total",
+            }
+
+            for key, label in labels.items():
+                value = timings.get(key)
+                if value is None:
+                    continue
+
+                try:
+                    seconds = float(value) / 1000
+                except (TypeError, ValueError):
+                    continue
+
+                timing_rows.append(
+                    {
+                        "Stage": label,
+                        "Seconds": round(seconds, 2),
+                    }
+                )
+
+            if timing_rows:
+                st.dataframe(
+                    timing_rows,
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+        if round_trip_seconds is not None:
+            st.caption(
+                "Complete Streamlit → FastAPI → Streamlit round trip: "
+                f"{round_trip_seconds} seconds"
+            )
+
+
+def _render_query_evidence(result: dict) -> None:
+    """
+    Render backend evidence without reinterpreting AWS facts in Streamlit.
+
+    The backend remains responsible for:
+      Groq planning -> read-only validation -> AWS MCP execution ->
+      multi-Region aggregation -> Groq answer generation.
+    """
+    status = _query_status_label(result)
+
+    st.caption(f"Query status: {status}")
+
+    intent = result.get("intent")
+    if intent:
+        st.markdown("**Resolved Query Plan**")
+        st.json(intent)
+
+    evidence = result.get("data")
+    if evidence is not None:
+        st.markdown("**AWS Evidence**")
+        st.json(evidence)
+    else:
+        st.info(
+            "No AWS evidence payload was returned for this query."
+        )
+
+    warnings = result.get("warnings") or []
+    if warnings:
+        st.markdown("**Query Warnings**")
+        for warning in warnings:
+            if isinstance(warning, dict):
+                region = warning.get("region")
+                error = warning.get("error") or warning
+                prefix = f"{region}: " if region else ""
+                st.warning(f"{prefix}{error}")
+            else:
+                st.warning(str(warning))
+
+    raw_error = result.get("raw")
+    if raw_error is not None:
+        st.markdown("**Backend Error Payload**")
+        st.json(raw_error)
+
+
+def _extract_query_answer(
+    result: dict | None,
+) -> str:
+    """Return the backend-generated natural-language answer."""
+    if not result:
+        return "No response was returned."
+
+    status = str(
+        result.get(
+            "status",
+            "",
+        )
+    ).upper()
+
+    answer = result.get("answer")
+
+    if status != "SUCCESS":
+        return str(
+            answer
+            or result.get("detail")
+            or "Unable to process the AWS question."
+        )
+
+    return str(
+        answer
+        or "The live AWS query completed successfully."
+    )
+
+
+def _render_chat_message(
+    message: dict,
+) -> None:
+    """Render a persisted chat message including timing/evidence metadata."""
+    role = message.get("role", "assistant")
+    content = str(message.get("content", ""))
+
+    with st.chat_message(role):
+        st.markdown(content)
+
+        if role != "assistant":
+            return
+
+        result = message.get("result")
+        if not isinstance(result, dict):
+            return
+
+        _render_query_timing(result)
+
+        with st.expander(
+            "View AWS evidence",
+            expanded=False,
+        ):
+            _render_query_evidence(result)
+
+
+def render_aws_ai_chat(
+    aws_connection: dict,
+    scan_data: dict,
+) -> None:
+
+    if scan_data.get("status") != "COMPLETED":
+        return
+
+    credentials = st.session_state.get(
+        "aws_credentials"
+    )
+
+    if not credentials:
+        st.warning(
+            "AWS credentials are no longer available in this session. "
+            "Please verify the account again."
+        )
+        return
+
+    if "aws_chat_history" not in st.session_state:
+        st.session_state["aws_chat_history"] = [
+            {
+                "role": "assistant",
+                "content": (
+                    "Hello! I'm your AWS AI Assistant. "
+                    "Ask me about the AWS infrastructure discovered for this account."
+                ),
+            }
+        ]
+
+    st.markdown(
+        "<br>",
+        unsafe_allow_html=True,
+    )
+
+    header_col, clear_col = st.columns(
+        [6, 1]
+    )
+
+    with header_col:
+        st.markdown(
+            """
+            <div class="chat-heading">🤖 AWS AI Assistant</div>
+            <div class="chat-subtitle">
+                Ask questions about your AWS infrastructure. Live read-only details are fetched through AWS MCP only when needed.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with clear_col:
+        if st.button(
+            "Clear Chat",
+            use_container_width=True,
+            key="clear_aws_chat",
+        ):
+            st.session_state["aws_chat_history"] = [
+                {
+                    "role": "assistant",
+                    "content": (
+                        "Hello! I'm your AWS AI Assistant. "
+                        "What would you like to know about this AWS account?"
+                    ),
+                }
+            ]
             st.rerun()
+
+    # Re-render complete persisted chat, including response times and evidence.
+    for message in st.session_state["aws_chat_history"]:
+        _render_chat_message(message)
+
+    question = st.chat_input(
+        "Ask anything about your AWS account..."
+    )
+
+    if not question:
+        return
+
+    question = question.strip()
+    if not question:
+        return
+
+    user_message = {
+        "role": "user",
+        "content": question,
+    }
+
+    st.session_state["aws_chat_history"].append(
+        user_message
+    )
+
+    with st.chat_message("user"):
+        st.markdown(question)
+
+    with st.chat_message("assistant"):
+        with st.spinner(
+            "Querying the live AWS account through the official AWS MCP Server..."
+        ):
+            query_result = query_aws_account(
+                credentials=credentials,
+                question=question,
+                scan_result=scan_data,
+            )
+
+        answer = _extract_query_answer(
+            query_result
+        )
+
+        status = _query_status_label(
+            query_result
+        )
+
+        if status == "SUCCESS":
+            st.markdown(answer)
+        else:
+            st.warning(answer)
+
+        if isinstance(query_result, dict):
+            _render_query_timing(
+                query_result
+            )
+
+            with st.expander(
+                "View AWS evidence",
+                expanded=False,
+            ):
+                _render_query_evidence(
+                    query_result
+                )
+
+    assistant_message = {
+        "role": "assistant",
+        "content": answer,
+    }
+
+    # Persist the complete structured response so timing/evidence does not
+    # disappear when Streamlit reruns on the next user interaction.
+    if isinstance(query_result, dict):
+        assistant_message["result"] = (
+            query_result
+        )
+
+    st.session_state["aws_chat_history"].append(
+        assistant_message
+    )
 
 
 # ============================================================
-# CURRENT AWS CONNECTION
+# HEADER / APPLICATION SHELL
 # ============================================================
 
 aws_connection = st.session_state.get(
     "aws_connection"
 )
 
-if aws_connection:
-    st.divider()
+scan_data = st.session_state.get(
+    "aws_scan"
+)
 
-    st.subheader(
-        "Verified AWS Account"
+render_app_sidebar(
+    aws_connection=aws_connection,
+    scan_data=scan_data,
+)
+
+# ============================================================
+# CONNECT / VERIFY
+# ============================================================
+
+if not aws_connection:
+
+    st.markdown(
+        """
+        <div class="overview-title">Connect AWS Account</div>
+        <div class="overview-subtitle">
+            Verify the client AWS account through the official AWS Managed MCP Server.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    col1, col2, col3 = (
-        st.columns(3)
-    )
+    st.write("")
 
-    with col1:
-        st.metric(
-            "Cloud Provider",
-            aws_connection.get(
-                "provider",
-                "AWS",
-            ),
+    with st.form(
+        "aws_connection_form"
+    ):
+        st.subheader(
+            "AWS Credentials"
         )
 
-    with col2:
-        st.metric(
-            "AWS Account",
-            aws_connection.get(
-                "account_id",
-                "-",
-            ),
+        access_key_id = st.text_input(
+            "AWS Access Key ID",
+            placeholder="AKIA...",
         )
 
-    with col3:
-        st.metric(
-            "Status",
-            aws_connection.get(
-                "connection_status",
-                "VERIFIED",
-            ),
+        secret_access_key = st.text_input(
+            "AWS Secret Access Key",
+            type="password",
         )
 
-    st.caption(
-        "Caller Identity"
-    )
-
-    st.code(
-        aws_connection.get(
-            "arn",
-            "ARN not returned",
-        ),
-        language=None,
-    )
-
-    # ========================================================
-    # SCAN CONTROLS
-    # ========================================================
-
-    action_col1, action_col2 = (
-        st.columns(
-            [3, 1]
+        session_token = st.text_input(
+            "AWS Session Token (optional)",
+            type="password",
         )
-    )
 
-    with action_col1:
-        run_scan_clicked = st.button(
-            "Start AWS Infrastructure Scan",
+        connect = st.form_submit_button(
+            "Verify AWS Account",
             type="primary",
             use_container_width=True,
         )
 
-    with action_col2:
+    if connect:
+        if (
+            not access_key_id
+            or not secret_access_key
+        ):
+            st.error(
+                "Access Key ID and Secret Access Key are required."
+            )
+
+        else:
+            credentials_payload = {
+                "access_key_id": access_key_id.strip(),
+                "secret_access_key": secret_access_key,
+                "session_token": (
+                    session_token.strip()
+                    if session_token.strip()
+                    else None
+                ),
+            }
+
+            verification_data = verify_aws_account(
+                credentials_payload
+            )
+
+            if verification_data:
+                clear_scan_results()
+
+                st.session_state[
+                    "aws_connection"
+                ] = verification_data
+
+                st.session_state[
+                    "aws_credentials"
+                ] = credentials_payload
+
+                st.success(
+                    "AWS account verified successfully."
+                )
+
+                st.rerun()
+
+    st.info(
+        "The UI does not call AWS APIs, boto3, or AWS CLI directly. "
+        "AWS verification remains handled by the existing backend and "
+        "the official AWS Managed MCP Server."
+    )
+
+# ============================================================
+# VERIFIED ACCOUNT / DISCOVERY
+# ============================================================
+
+else:
+    title_col, disconnect_col = st.columns(
+        [5.5, 1]
+    )
+
+    with title_col:
+        st.markdown(
+            """
+            <div class="overview-title">AWS AI Auditor</div>
+            <div class="overview-subtitle">
+                Discover the account first, then ask targeted infrastructure questions.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with disconnect_col:
         disconnect_clicked = st.button(
             "Disconnect",
             use_container_width=True,
+            key="disconnect_account",
         )
-
-    # ========================================================
-    # DISCONNECT
-    # ========================================================
 
     if disconnect_clicked:
         clear_aws_session()
         st.rerun()
 
-    # ========================================================
-    # FULL AWS INFRASTRUCTURE SCAN
-    # ========================================================
+    st.write("")
 
-    if run_scan_clicked:
-        credentials = st.session_state.get(
-            "aws_credentials"
+    if not scan_data:
+
+        account_col1, account_col2, account_col3 = st.columns(3)
+
+        with account_col1:
+            st.metric(
+                "Cloud Provider",
+                aws_connection.get(
+                    "provider",
+                    "AWS",
+                ),
+            )
+
+        with account_col2:
+            st.metric(
+                "AWS Account",
+                aws_connection.get(
+                    "account_id",
+                    "-",
+                ),
+            )
+
+        with account_col3:
+            st.metric(
+                "Status",
+                aws_connection.get(
+                    "connection_status",
+                    "VERIFIED",
+                ),
+            )
+
+        st.caption(
+            "Caller Identity"
         )
 
-        if not credentials:
-            st.error(
-                "AWS credentials are no longer "
-                "available in this session. "
-                "Please verify the account again."
+        st.code(
+            aws_connection.get(
+                "arn",
+                "ARN not returned",
+            ),
+            language=None,
+        )
+
+        run_scan_clicked = st.button(
+            "Start AWS Discovery Scan",
+            type="primary",
+            use_container_width=True,
+            key="start_aws_discovery_scan",
+        )
+
+        if run_scan_clicked:
+            credentials = st.session_state.get(
+                "aws_credentials"
+            )
+
+            if not credentials:
+                st.error(
+                    "AWS credentials are no longer available in this session. "
+                    "Please verify the account again."
+                )
+
+            else:
+                new_scan_data = run_aws_scan(
+                    credentials
+                )
+
+                if new_scan_data:
+                    st.session_state[
+                        "aws_scan"
+                    ] = new_scan_data
+
+                    if (
+                        new_scan_data.get(
+                            "status"
+                        )
+                        == "COMPLETED"
+                    ):
+                        st.success(
+                            "AWS discovery completed successfully."
+                        )
+                    else:
+                        st.error(
+                            "AWS discovery did not complete successfully."
+                        )
+
+                    st.rerun()
+
+        st.info(
+            "The discovery scan only establishes the account context, "
+            "Regions, Availability Zones, detected services and lightweight "
+            "resource metadata. Detailed configuration is queried later from chat."
+        )
+
+    else:
+        render_template1_overview(
+            aws_connection=aws_connection,
+            scan_data=scan_data,
+        )
+
+        warnings = (
+            scan_data.get(
+                "warnings",
+                [],
+            )
+            or []
+        )
+
+        if warnings:
+            with st.expander(
+                f"Discovery warnings ({len(warnings)})"
+            ):
+                for warning in warnings:
+                    st.warning(
+                        warning
+                    )
+
+        if (
+            scan_data.get("status")
+            == "COMPLETED"
+        ):
+            render_aws_ai_chat(
+                aws_connection=aws_connection,
+                scan_data=scan_data,
             )
 
         else:
-            scan_data = run_aws_scan(
-                credentials
+            st.error(
+                "The AWS discovery did not complete successfully. "
+                "Reconnect or run the scan again after resolving the reported issue."
             )
-
-            if scan_data:
-                st.session_state[
-                    "aws_scan"
-                ] = scan_data
-
-                if (
-                    scan_data.get(
-                        "status"
-                    )
-                    == "COMPLETED"
-                ):
-                    st.success(
-                        "AWS infrastructure scan "
-                        "completed successfully."
-                    )
-                else:
-                    st.error(
-                        "AWS infrastructure scan "
-                        "did not complete successfully."
-                    )
-
-                st.rerun()
-
-
-# ============================================================
-# LOAD CURRENT SCAN
-# ============================================================
-
-scan_data = st.session_state.get(
-    "aws_scan"
-)
-
-region_data = None
-zone_data = None
-resource_data = None
-deep_scan_data = None
-
-if scan_data:
-    region_data = scan_data.get(
-        "regions"
-    )
-
-    zone_data = scan_data.get(
-        "zones"
-    )
-
-    resource_data = scan_data.get(
-        "resources"
-    )
-
-    deep_scan_data = scan_data.get(
-        "deep_scan"
-    )
-
-
-# ============================================================
-# OVERALL SCAN SUMMARY
-# ============================================================
-
-if scan_data:
-    st.divider()
-
-    st.header(
-        "AWS Infrastructure Scan"
-    )
-
-    status_value = scan_data.get(
-        "status",
-        "UNKNOWN",
-    )
-
-    account = scan_data.get(
-        "account",
-        {},
-    ) or {}
-
-    summary = scan_data.get(
-        "summary",
-        {},
-    ) or {}
-
-    scan_col1, scan_col2, scan_col3 = (
-        st.columns(3)
-    )
-
-    with scan_col1:
-        st.metric(
-            "Scan Status",
-            status_value,
-        )
-
-    with scan_col2:
-        st.metric(
-            "AWS Account",
-            account.get(
-                "account_id",
-                "-",
-            ),
-        )
-
-    with scan_col3:
-        st.metric(
-            "Resources",
-            summary.get(
-                "discovered_resources",
-                0,
-            ),
-        )
-
-    region_col1, region_col2, region_col3 = (
-        st.columns(3)
-    )
-
-    with region_col1:
-        st.metric(
-            "Enabled Regions",
-            summary.get(
-                "enabled_regions",
-                0,
-            ),
-        )
-
-    with region_col2:
-        st.metric(
-            "Used Regions",
-            summary.get(
-                "used_regions",
-                0,
-            ),
-        )
-
-    with region_col3:
-        st.metric(
-            "Availability Zones",
-            summary.get(
-                "availability_zones",
-                0,
-            ),
-        )
-
-    service_col1, service_col2 = (
-        st.columns(2)
-    )
-
-    with service_col1:
-        st.metric(
-            "Detected Services",
-            summary.get(
-                "detected_services",
-                0,
-            ),
-        )
-
-    with service_col2:
-        st.metric(
-            "Deep Scanned Services",
-            summary.get(
-                "deep_scanned_services",
-                0,
-            ),
-        )
-
-    scan_id = scan_data.get(
-        "scan_id"
-    )
-
-    if scan_id:
-        st.caption(
-            f"Scan ID: {scan_id}"
-        )
-
-    started_at = scan_data.get(
-        "started_at"
-    )
-
-    completed_at = scan_data.get(
-        "completed_at"
-    )
-
-    if started_at or completed_at:
-        time_col1, time_col2 = (
-            st.columns(2)
-        )
-
-        with time_col1:
-            st.caption(
-                f"Started: {started_at or '-'}"
-            )
-
-        with time_col2:
-            st.caption(
-                f"Completed: {completed_at or '-'}"
-            )
-
-
-# ============================================================
-# DETAILED SCAN RESULTS
-# ============================================================
-
-render_region_results(
-    region_data
-)
-
-render_zone_results(
-    zone_data
-)
-
-render_resource_inventory(
-    resource_data
-)
-
-render_deep_scan(
-    deep_scan_data
-)
-
-
-# ============================================================
-# SCAN WARNINGS
-# ============================================================
-
-warnings = (
-    scan_data.get(
-        "warnings",
-        [],
-    )
-    if scan_data
-    else []
-)
-
-render_scan_warnings(
-    warnings
-)
-
-
-# ============================================================
-# SCAN STATUS
-# ============================================================
-
-render_scan_status(
-    aws_connection=aws_connection,
-    scan_data=scan_data,
-    region_data=region_data,
-    zone_data=zone_data,
-    resource_data=resource_data,
-    deep_scan_data=deep_scan_data,
-)
-
-
-# ============================================================
-# INFORMATION
-# ============================================================
-
-if aws_connection and not scan_data:
-    st.info(
-        "Start the AWS Infrastructure Scan to dynamically "
-        "discover Regions, Availability Zones, resources, "
-        "used Regions, detected AWS services and available "
-        "deep configuration inventory through the official "
-        "AWS Managed MCP Server."
-    )
-
-elif not aws_connection:
-    st.info(
-        "Verify an AWS account to begin dynamic "
-        "AWS infrastructure discovery."
-    )
