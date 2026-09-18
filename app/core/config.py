@@ -25,6 +25,12 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     
+    database_url: str = "sqlite+aiosqlite:///./data/aws_auditor.db"
+
+    jwt_secret_key: str 
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 120
+    
 
 @lru_cache
 def get_settings()-> Settings:
