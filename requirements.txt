@@ -9,3 +9,6 @@ mcp[cli]
 groq
 sqlalchemy
 aiosqlite
+alembic
+passlib[bcrypt]
+python-jose[cryptography]
