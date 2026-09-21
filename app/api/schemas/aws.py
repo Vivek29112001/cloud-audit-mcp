@@ -1,9 +1,21 @@
+from __future__ import annotations
+
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import (
+    BaseModel,
+    Field,
+    SecretStr,
+)
+
+
+# ============================================================
+# AWS CREDENTIAL REQUEST
+# ============================================================
 
 
 class AWSVerifyRequest(BaseModel):
+
     access_key_id: str = Field(
         min_length=16,
         max_length=128,
@@ -13,58 +25,119 @@ class AWSVerifyRequest(BaseModel):
 
     session_token: SecretStr | None = None
 
+    default_region: str = Field(
+        default="us-east-1",
+        min_length=1,
+        max_length=64,
+    )
+
+
+# ============================================================
+# AWS VERIFY RESPONSE
+# ============================================================
+
 
 class AWSVerifyResponse(BaseModel):
+
     provider: str
+
     account_id: str
+
     arn: str
+
     user_id: str
+
     connection_status: str
 
 
+# ============================================================
+# REGION DISCOVERY
+# ============================================================
+
+
 class AWSRegionResponse(BaseModel):
+
     region_name: str
+
     endpoint: str | None = None
+
     opt_in_status: str | None = None
+
     enabled: bool
 
 
-class AWSRegionDiscoveryResponse(BaseModel):
+class AWSRegionDiscoveryResponse(
+    BaseModel
+):
+
     total_regions: int
+
     enabled_regions: int
+
     disabled_regions: int
-    regions: list[AWSRegionResponse]
+
+    regions: list[
+        AWSRegionResponse
+    ]
 
 
-class AWSAvailabilityZoneResponse(BaseModel):
+# ============================================================
+# AVAILABILITY ZONES
+# ============================================================
+
+
+class AWSAvailabilityZoneResponse(
+    BaseModel
+):
+
     zone_name: str
+
     zone_id: str | None = None
+
     region_name: str
 
     state: str | None = None
+
     zone_type: str | None = None
+
     opt_in_status: str | None = None
 
 
-class AWSZoneDiscoveryResponse(BaseModel):
+class AWSZoneDiscoveryResponse(
+    BaseModel
+):
+
     total_zones: int
-    zones: list[AWSAvailabilityZoneResponse]
+
+    zones: list[
+        AWSAvailabilityZoneResponse
+    ]
+
+
+class AWSZoneDiscoveryRequest(
+    AWSVerifyRequest
+):
+
+    enabled_regions: list[str] = Field(
+        min_length=1,
+    )
 
 
 # ============================================================
-# RESOURCE DISCOVERY
+# RESOURCE DISCOVERY REQUEST
 # ============================================================
+
 
 class AWSResourceDiscoveryRequest(
     AWSVerifyRequest
 ):
     """
-    Request used for resource discovery.
+    Request used for lightweight resource discovery.
 
     Credentials come from AWSVerifyRequest.
 
-    enabled_regions must come from our previous
-    dynamic AWS Region discovery step.
+    enabled_regions should come from the dynamic
+    Region discovery stage.
     """
 
     enabled_regions: list[str] = Field(
@@ -72,7 +145,15 @@ class AWSResourceDiscoveryRequest(
     )
 
 
-class AWSResourceResponse(BaseModel):
+# ============================================================
+# RESOURCE RESPONSE
+# ============================================================
+
+
+class AWSResourceResponse(
+    BaseModel
+):
+
     arn: str | None = None
 
     resource_id: str | None = None
@@ -92,9 +173,15 @@ class AWSResourceResponse(BaseModel):
     )
 
 
+# ============================================================
+# DETECTED SERVICE
+# ============================================================
+
+
 class AWSDetectedServiceResponse(
     BaseModel
 ):
+
     service: str
 
     resource_count: int
@@ -104,9 +191,15 @@ class AWSDetectedServiceResponse(
     )
 
 
+# ============================================================
+# RESOURCE DISCOVERY RESPONSE
+# ============================================================
+
+
 class AWSResourceDiscoveryResponse(
     BaseModel
 ):
+
     total_resources: int
 
     used_regions: list[str]
@@ -122,39 +215,60 @@ class AWSResourceDiscoveryResponse(
     warnings: list[str] = Field(
         default_factory=list
     )
-    
-    
-    
-    
-class AWSResourceDiscoveryResponse(BaseModel):
-    total_resources: int
-    used_regions: list[str]
-    detected_services: list[AWSDetectedServiceResponse]
-    resources: list[AWSResourceResponse]
-    warnings: list[str]
 
 
-class AWSDetectedServiceRequest(BaseModel):
+# ============================================================
+# LEGACY / OPTIONAL DEEP SCAN MODELS
+# ============================================================
+
+
+class AWSDetectedServiceRequest(
+    BaseModel
+):
+
     service: str
+
     resource_count: int
+
     regions: list[str]
 
 
-class AWSDeepScanRequest(AWSVerifyRequest):
-    detected_services: list[AWSDetectedServiceRequest]
+class AWSDeepScanRequest(
+    AWSVerifyRequest
+):
+
+    detected_services: list[
+        AWSDetectedServiceRequest
+    ]
 
 
-class AWSDeepScanResponse(BaseModel):
-    services: dict[str, Any]
+class AWSDeepScanResponse(
+    BaseModel
+):
+
+    services: dict[
+        str,
+        Any,
+    ]
+
     warnings: list[str]
 
-class AWSZoneDiscoveryRequest(AWSVerifyRequest):
-    enabled_regions: list[str]
+
+# ============================================================
+# NLP QUERY
+# ============================================================
 
 
 class AWSNaturalLanguageQueryRequest(
-    AWSVerifyRequest
+    BaseModel
 ):
-    question: str
 
-    scan_result: dict
+    scan_id: str = Field(
+        min_length=1,
+        max_length=128,
+    )
+
+    question: str = Field(
+        min_length=1,
+        max_length=4000,
+    )

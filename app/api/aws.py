@@ -1,116 +1,113 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, status
-
-from app.api.schemas.aws import (
-    AWSAvailabilityZoneResponse,
-    AWSDeepScanRequest,
-    AWSDeepScanResponse,
-    AWSDetectedServiceResponse,
-    AWSRegionDiscoveryResponse,
-    AWSRegionResponse,
-    AWSResourceDiscoveryRequest,
-    AWSResourceDiscoveryResponse,
-    AWSResourceResponse,
-    AWSVerifyRequest,
-    AWSVerifyResponse,
-    AWSZoneDiscoveryRequest,
-    AWSZoneDiscoveryResponse,
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
 )
-from app.providers.aws.connection import AWSConnectionService
-from app.providers.aws.credentials import AWSCredentials
-# from app.providers.aws.deep_scan import AWSDeepScanService
-from app.providers.aws.discovery import AWSResourceDiscoveryService
-from app.providers.aws.exceptions import (
-    AWSMCPExecutionError,
-    InvalidAWSCredentialsError,
-)
-from app.providers.aws.models import AWSDetectedService
-from app.providers.aws.regions import AWSRegionService
-from app.providers.aws.zones import AWSZoneService
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.providers.aws.scanner import AWSScanOrchestrator
+from app.ai.query_router import AWSQueryRouter
 
-
-from app.ai.query_router import (
-    AWSQueryRouter,
-)
 from app.api.schemas.aws import (
     AWSNaturalLanguageQueryRequest,
+    AWSVerifyRequest,
+    AWSVerifyResponse,
+)
+
+from app.api.schemas.scan import (
+    PersistedAWSScanResponse,
+)
+
+from app.auth.dependencies import (
+    get_current_user,
+)
+
+from app.db.models.user import User
+
+from app.db.session import (
+    get_db,
+)
+
+from app.providers.aws.connection import (
+    AWSConnectionService,
+)
+
+from app.providers.aws.credentials import (
+    AWSCredentials,
+)
+
+from app.providers.aws.scanner import (
+    AWSScanOrchestrator,
+)
+
+from app.providers.aws.session_store import (
+    aws_credential_sessions,
+)
+
+from app.repositories.aws_connection_repository import (
+    AWSConnectionRepository,
+)
+
+from app.repositories.aws_scan_repository import (
+    AWSScanRepository,
+)
+
+from app.services.aws_scan_context_service import (
+    AWSScanContextService,
+)
+
+from app.services.aws_scan_persistence_service import (
+    AWSScanPersistenceService,
 )
 
 
-import logging
-
-from fastapi import HTTPException
-
-
-logger = logging.getLogger(__name__)
-
-
+# ============================================================
+# ROUTER
+# ============================================================
 
 router = APIRouter(
-    prefix="/aws",
+    prefix="/api/aws",
     tags=["AWS"],
 )
 
 
 # ============================================================
-# COMMON
+# SERVICES
 # ============================================================
 
-def build_credentials(
-    request: AWSVerifyRequest,
-) -> AWSCredentials:
+connection_service = (
+    AWSConnectionService()
+)
 
-    return AWSCredentials(
-        access_key_id=request.access_key_id,
-        secret_access_key=request.secret_access_key,
-        session_token=request.session_token,
-        default_region="us-east-1",
-    )
+scanner = (
+    AWSScanOrchestrator()
+)
+
+scan_persistence_service = (
+    AWSScanPersistenceService()
+)
+
+scan_context_service = (
+    AWSScanContextService()
+)
+
+query_router = (
+    AWSQueryRouter()
+)
 
 
 # ============================================================
-# MCP DIAGNOSTICS
+# REPOSITORIES
 # ============================================================
 
-@router.post("/mcp/diagnostics")
-async def mcp_diagnostics(
-    request: AWSVerifyRequest,
-):
+connection_repository = (
+    AWSConnectionRepository()
+)
 
-    credentials = build_credentials(
-        request
-    )
-
-    client = AWSMCPClient(
-        credentials
-    )
-
-    try:
-
-        tools = await client.list_tools()
-
-    except Exception as exc:
-
-        raise HTTPException(
-            status_code=(
-                status.HTTP_502_BAD_GATEWAY
-            ),
-            detail=(
-                f"MCP connection failed: {exc}"
-            ),
-        ) from exc
-
-    return {
-        "connected": True,
-        "tool_count": len(tools),
-        "tools": [
-            tool.name
-            for tool in tools
-        ],
-    }
+scan_repository = (
+    AWSScanRepository()
+)
 
 
 # ============================================================
@@ -121,42 +118,68 @@ async def mcp_diagnostics(
     "/verify",
     response_model=AWSVerifyResponse,
 )
-async def verify_aws_connection(
+async def verify_aws_account(
     request: AWSVerifyRequest,
-) -> AWSVerifyResponse:
 
-    credentials = build_credentials(
-        request
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
+    """
+    Verify AWS credentials through the official AWS MCP server.
+
+    This endpoint does NOT run the complete discovery scan.
+
+    On successful verification:
+    - AWS identity is returned.
+    - Credentials are stored only in temporary backend memory.
+    - Credentials are NOT written to SQLite.
+    """
+
+    credentials = AWSCredentials(
+        access_key_id=(
+            request.access_key_id
+        ),
+
+        secret_access_key=(
+            request.secret_access_key
+        ),
+
+        session_token=(
+            request.session_token
+        ),
+
+        default_region=(
+            request.default_region
+            or "us-east-1"
+        ),
     )
 
-    service = AWSConnectionService()
-
     try:
-
         identity = (
-            await service
+            await connection_service
             .verify_credentials(
                 credentials
             )
         )
 
-    except InvalidAWSCredentialsError as exc:
-
+    except Exception as exc:
         raise HTTPException(
-            status_code=(
-                status.HTTP_401_UNAUTHORIZED
+            status_code=401,
+            detail=(
+                "Unable to verify AWS credentials: "
+                f"{exc}"
             ),
-            detail=str(exc),
         ) from exc
 
-    except AWSMCPExecutionError as exc:
+    # --------------------------------------------------------
+    # Store credentials ONLY in backend runtime memory
+    # --------------------------------------------------------
 
-        raise HTTPException(
-            status_code=(
-                status.HTTP_502_BAD_GATEWAY
-            ),
-            detail=str(exc),
-        ) from exc
+    await aws_credential_sessions.set(
+        user_id=current_user.id,
+        credentials=credentials,
+    )
 
     return AWSVerifyResponse(
         provider=identity.provider,
@@ -170,377 +193,623 @@ async def verify_aws_connection(
 
 
 # ============================================================
-# REGION DISCOVERY
+# RUN AWS DISCOVERY SCAN
 # ============================================================
 
 @router.post(
-    "/regions",
-    response_model=(
-        AWSRegionDiscoveryResponse
-    ),
+    "/scan",
+    response_model=PersistedAWSScanResponse,
 )
-async def discover_aws_regions(
+async def scan_aws_account(
     request: AWSVerifyRequest,
-) -> AWSRegionDiscoveryResponse:
 
-    credentials = build_credentials(
-        request
-    )
-
-    service = AWSRegionService()
-
-    try:
-
-        result = (
-            await service
-            .discover_regions(
-                credentials
-            )
-        )
-
-    except AWSMCPExecutionError as exc:
-
-        raise HTTPException(
-            status_code=(
-                status.HTTP_502_BAD_GATEWAY
-            ),
-            detail=str(exc),
-        ) from exc
-
-    return AWSRegionDiscoveryResponse(
-        total_regions=(
-            result.total_regions
-        ),
-        enabled_regions=(
-            result.enabled_regions
-        ),
-        disabled_regions=(
-            result.disabled_regions
-        ),
-        regions=[
-            AWSRegionResponse(
-                region_name=(
-                    region.region_name
-                ),
-                endpoint=region.endpoint,
-                opt_in_status=(
-                    region.opt_in_status
-                ),
-                enabled=region.enabled,
-            )
-            for region
-            in result.regions
-        ],
-    )
-
-
-# ============================================================
-# AVAILABILITY ZONE DISCOVERY
-# ============================================================
-
-@router.post(
-    "/zones",
-    response_model=(
-        AWSZoneDiscoveryResponse
+    db: AsyncSession = Depends(
+        get_db
     ),
-)
-async def discover_aws_zones(
-    request: AWSVerifyRequest,
-) -> AWSZoneDiscoveryResponse:
 
-    credentials = build_credentials(
-        request
-    )
-
-    region_service = (
-        AWSRegionService()
-    )
-
-    zone_service = (
-        AWSZoneService()
-    )
-
-    try:
-
-        region_result = (
-            await region_service
-            .discover_regions(
-                credentials
-            )
-        )
-
-        enabled_regions = [
-            region.region_name
-            for region
-            in region_result.regions
-            if region.enabled
-        ]
-
-        zone_result = (
-            await zone_service
-            .discover_zones(
-                credentials=credentials,
-                enabled_regions=(
-                    enabled_regions
-                ),
-            )
-        )
-
-    except AWSMCPExecutionError as exc:
-
-        raise HTTPException(
-            status_code=(
-                status.HTTP_502_BAD_GATEWAY
-            ),
-            detail=str(exc),
-        ) from exc
-
-    return AWSZoneDiscoveryResponse(
-        total_zones=(
-            zone_result.total_zones
-        ),
-        zones=[
-            AWSAvailabilityZoneResponse(
-                zone_name=zone.zone_name,
-                zone_id=zone.zone_id,
-                region_name=(
-                    zone.region_name
-                ),
-                state=zone.state,
-                zone_type=zone.zone_type,
-                opt_in_status=(
-                    zone.opt_in_status
-                ),
-            )
-            for zone
-            in zone_result.zones
-        ],
-    )
-
-
-# ============================================================
-# RESOURCE DISCOVERY
-# ============================================================
-
-@router.post(
-    "/resources/discover",
-    response_model=(
-        AWSResourceDiscoveryResponse
+    current_user: User = Depends(
+        get_current_user
     ),
-)
-async def discover_aws_resources(
-    request: AWSResourceDiscoveryRequest,
-) -> AWSResourceDiscoveryResponse:
-
-    # AWSResourceDiscoveryRequest inherits
-    # AWSVerifyRequest, so reuse our helper.
-    credentials = build_credentials(
-        request
-    )
-
-    service = (
-        AWSResourceDiscoveryService()
-    )
-
-    try:
-
-        result = (
-            await service
-            .discover_resources(
-                credentials=credentials,
-                enabled_regions=(
-                    request.enabled_regions
-                ),
-            )
-        )
-
-    except AWSMCPExecutionError as exc:
-
-        raise HTTPException(
-            status_code=(
-                status.HTTP_502_BAD_GATEWAY
-            ),
-            detail=str(exc),
-        ) from exc
-
-    return AWSResourceDiscoveryResponse(
-        total_resources=(
-            result.total_resources
-        ),
-
-        used_regions=(
-            result.used_regions
-        ),
-
-        detected_services=[
-            AWSDetectedServiceResponse(
-                service=item.service,
-                resource_count=(
-                    item.resource_count
-                ),
-                regions=item.regions,
-            )
-            for item
-            in result.detected_services
-        ],
-
-        resources=[
-            AWSResourceResponse(
-                arn=item.arn,
-                resource_id=(
-                    item.resource_id
-                ),
-                resource_type=(
-                    item.resource_type
-                ),
-                service=item.service,
-                region=item.region,
-                owning_account_id=(
-                    item.owning_account_id
-                ),
-                properties=(
-                    item.properties
-                ),
-            )
-            for item
-            in result.resources
-        ],
-
-        warnings=result.warnings,
-    )
-    
-    
-# @router.post("/deep-scan", response_model=AWSDeepScanResponse)
-# async def deep_scan_aws(
-#     request: AWSDeepScanRequest,
-# ) -> AWSDeepScanResponse:
-#     credentials = _credentials_from_request(request)
-
-#     detected_services = [
-#         AWSDetectedService(
-#             service=item.service,
-#             resource_count=item.resource_count,
-#             regions=item.regions,
-#         )
-#         for item in request.detected_services
-#     ]
-
-#     result = await AWSDeepScanService().scan(
-#         credentials=credentials,
-#         detected_services=detected_services,
-#     )
-
-#     return AWSDeepScanResponse(
-#         services=result.services,
-#         warnings=result.warnings,
-#     )
-    
-    
-@router.post(
-    "/scan"
-)
-async def run_aws_scan(
-    request: AWSVerifyRequest,
 ):
+    """
+    Run the complete lightweight AWS discovery scan.
+
+    Flow:
+
+        AWS credentials
+            ↓
+        Official AWS MCP
+            ↓
+        Account identity
+            ↓
+        Region discovery
+            ↓
+        Availability Zones
+            ↓
+        Resource / service discovery
+            ↓
+        Persist discovery result in SQLite
+
+    AWS credentials themselves are never persisted.
+    """
+
+    # --------------------------------------------------------
+    # 1. Build credentials
+    # --------------------------------------------------------
 
     credentials = AWSCredentials(
         access_key_id=(
             request.access_key_id
         ),
+
         secret_access_key=(
             request.secret_access_key
         ),
+
         session_token=(
             request.session_token
         ),
+
+        default_region=(
+            request.default_region
+            or "us-east-1"
+        ),
     )
 
-    scanner = AWSScanOrchestrator()
+    # --------------------------------------------------------
+    # 2. Run Phase 1 scanner
+    # --------------------------------------------------------
 
     result = await scanner.scan(
         credentials
     )
 
-    return result.model_dump(
-        mode="json"
-    ) 
-    
-    
-# @router.post(
-#     "/query"
-# )
-# async def query_aws(
-#     request: AWSNaturalLanguageQueryRequest,
-# ):
-#     credentials = AWSCredentials(
-#         access_key_id=(
-#             request.access_key_id
-#         ),
-#         secret_access_key=(
-#             request.secret_access_key
-#         ),
-#         session_token=(
-#             request.session_token
-#         ),
-#     )
+    # --------------------------------------------------------
+    # 3. Handle failed scan
+    # --------------------------------------------------------
 
-#     router = AWSQueryRouter()
+    if result.status != "COMPLETED":
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "message":
+                    "AWS discovery scan failed.",
 
-#     return await router.execute(
-#         question=request.question,
-#         credentials=credentials,
-#         scan_result=request.scan_result,
-#     )  
-    
-  
-@router.post("/query")
+                "scan_id":
+                    result.scan_id,
+
+                "warnings":
+                    list(
+                        result.warnings
+                    ),
+
+                "timings":
+                    dict(
+                        result.timings
+                    ),
+            },
+        )
+
+    # --------------------------------------------------------
+    # 4. Persist scan/account metadata
+    # --------------------------------------------------------
+
+    persisted_scan = (
+        await scan_persistence_service
+        .save_scan(
+            db,
+            user=current_user,
+            scan_result=result,
+        )
+    )
+
+    # --------------------------------------------------------
+    # 5. Refresh temporary credential session
+    # --------------------------------------------------------
+
+    await aws_credential_sessions.set(
+        user_id=current_user.id,
+        credentials=credentials,
+    )
+
+    # --------------------------------------------------------
+    # 6. Return persisted scan
+    # --------------------------------------------------------
+
+    return PersistedAWSScanResponse(
+        scan_id=(
+            result.scan_id
+        ),
+
+        database_id=(
+            persisted_scan.id
+        ),
+
+        aws_connection_id=(
+            persisted_scan
+            .aws_connection_id
+        ),
+
+        status=(
+            result.status
+        ),
+
+        account=(
+            result.account.model_dump(
+                mode="json"
+            )
+            if result.account
+            else {}
+        ),
+
+        summary=(
+            result.summary.model_dump(
+                mode="json"
+            )
+            if result.summary
+            else {}
+        ),
+
+        regions=(
+            result.regions.model_dump(
+                mode="json"
+            )
+            if result.regions
+            else {}
+        ),
+
+        zones=(
+            result.zones.model_dump(
+                mode="json"
+            )
+            if result.zones
+            else {}
+        ),
+
+        resources=(
+            result.resources.model_dump(
+                mode="json"
+            )
+            if result.resources
+            else {}
+        ),
+
+        warnings=list(
+            result.warnings
+        ),
+
+        timings=dict(
+            result.timings
+        ),
+    )
+
+
+# ============================================================
+# AWS CONNECTIONS
+# ============================================================
+
+@router.get(
+    "/connections"
+)
+async def get_aws_connections(
+    db: AsyncSession = Depends(
+        get_db
+    ),
+
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
+    """
+    Return AWS account metadata previously discovered
+    by the authenticated user.
+
+    No credentials are returned.
+    """
+
+    connections = (
+        await connection_repository
+        .find_all_by_user(
+            db,
+            user_id=current_user.id,
+        )
+    )
+
+    return [
+        {
+            "id":
+                connection.id,
+
+            "provider":
+                connection.provider,
+
+            "account_id":
+                connection.account_id,
+
+            "account_arn":
+                connection.account_arn,
+
+            "display_name":
+                connection.display_name,
+
+            "last_connected_at":
+                connection.last_connected_at,
+
+            "created_at":
+                connection.created_at,
+        }
+
+        for connection
+        in connections
+    ]
+
+
+# ============================================================
+# SCANS FOR ONE AWS CONNECTION
+# ============================================================
+
+@router.get(
+    "/connections/{connection_id}/scans"
+)
+async def get_connection_scans(
+    connection_id: int,
+
+    db: AsyncSession = Depends(
+        get_db
+    ),
+
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
+    """
+    Return discovery scans for one AWS account/connection.
+    """
+
+    scans = (
+        await scan_repository
+        .find_by_connection(
+            db,
+
+            user_id=(
+                current_user.id
+            ),
+
+            aws_connection_id=(
+                connection_id
+            ),
+        )
+    )
+
+    return [
+        {
+            "database_id":
+                scan.id,
+
+            "scan_id":
+                scan.scan_id,
+
+            "aws_connection_id":
+                scan.aws_connection_id,
+
+            "status":
+                scan.status,
+
+            "account":
+                scan.account_json,
+
+            "summary":
+                scan.summary_json,
+
+            "warnings":
+                scan.warnings_json,
+
+            "timings":
+                scan.timings_json,
+
+            "started_at":
+                scan.started_at,
+
+            "completed_at":
+                scan.completed_at,
+        }
+
+        for scan
+        in scans
+    ]
+
+
+# ============================================================
+# ALL SCANS FOR CURRENT USER
+# ============================================================
+
+@router.get(
+    "/scans"
+)
+async def get_scan_history(
+    db: AsyncSession = Depends(
+        get_db
+    ),
+
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
+    """
+    Return all persisted discovery scans for
+    the authenticated user.
+    """
+
+    scans = (
+        await scan_repository
+        .find_all_by_user(
+            db,
+            user_id=current_user.id,
+        )
+    )
+
+    return [
+        {
+            "database_id":
+                scan.id,
+
+            "scan_id":
+                scan.scan_id,
+
+            "aws_connection_id":
+                scan.aws_connection_id,
+
+            "status":
+                scan.status,
+
+            "account":
+                scan.account_json,
+
+            "summary":
+                scan.summary_json,
+
+            "warnings":
+                scan.warnings_json,
+
+            "timings":
+                scan.timings_json,
+
+            "started_at":
+                scan.started_at,
+
+            "completed_at":
+                scan.completed_at,
+        }
+
+        for scan
+        in scans
+    ]
+
+
+# ============================================================
+# GET ONE SCAN
+# ============================================================
+
+@router.get(
+    "/scans/{scan_id}"
+)
+async def get_scan(
+    scan_id: str,
+
+    db: AsyncSession = Depends(
+        get_db
+    ),
+
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
+    """
+    Return the complete persisted discovery result.
+    """
+
+    scan = (
+        await scan_repository
+        .find_by_scan_id(
+            db,
+            scan_id=scan_id,
+            user_id=current_user.id,
+        )
+    )
+
+    if scan is None:
+        raise HTTPException(
+            status_code=404,
+            detail="AWS scan not found.",
+        )
+
+    return {
+        "database_id":
+            scan.id,
+
+        "scan_id":
+            scan.scan_id,
+
+        "aws_connection_id":
+            scan.aws_connection_id,
+
+        "status":
+            scan.status,
+
+        "account":
+            scan.account_json,
+
+        "summary":
+            scan.summary_json,
+
+        "regions":
+            scan.regions_json,
+
+        "zones":
+            scan.zones_json,
+
+        "resources":
+            scan.resources_json,
+
+        "warnings":
+            scan.warnings_json,
+
+        "timings":
+            scan.timings_json,
+
+        "started_at":
+            scan.started_at,
+
+        "completed_at":
+            scan.completed_at,
+    }
+
+
+# ============================================================
+# DIRECT NLP QUERY
+# ============================================================
+
+@router.post(
+    "/query"
+)
 async def query_aws(
     request: AWSNaturalLanguageQueryRequest,
+
+    db: AsyncSession = Depends(
+        get_db
+    ),
+
+    current_user: User = Depends(
+        get_current_user
+    ),
 ):
-    try:
+    """
+    Execute a direct NLP AWS query.
 
-        credentials = AWSCredentials(
-            access_key_id=(
-                request.access_key_id
-            ),
-            secret_access_key=(
-                request.secret_access_key
-            ),
-            session_token=(
-                request.session_token
-            ),
+    Request contains only:
+
+        scan_id
+        question
+
+    The persisted scan is loaded from SQLite.
+    AWS credentials are loaded from temporary memory.
+    """
+
+    # --------------------------------------------------------
+    # 1. Load scan context
+    # --------------------------------------------------------
+
+    scan_context = (
+        await scan_context_service
+        .load_scan_context(
+            db,
+            user=current_user,
+            scan_id=request.scan_id,
         )
+    )
 
-        router = AWSQueryRouter()
+    # --------------------------------------------------------
+    # 2. Get transient AWS credentials
+    # --------------------------------------------------------
 
-        result = await router.execute(
-            question=request.question,
-            credentials=credentials,
-            scan_result=request.scan_result,
+    credentials = (
+        await aws_credential_sessions
+        .get(
+            user_id=current_user.id
         )
+    )
 
-        logger.info(
-            "AWS NLP query completed. "
-            "question=%s status=%s",
-            request.question,
-            result.get("status"),
-        )
-
-        return result
-
-    except Exception as exc:
-
-        logger.exception(
-            "AWS NLP query failed. "
-            "question=%s",
-            request.question,
-        )
-
+    if credentials is None:
         raise HTTPException(
-            status_code=500,
+            status_code=409,
             detail=(
-                f"AWS query failed: "
-                f"{type(exc).__name__}: {exc}"
+                "AWS connection has expired "
+                "or is not active. "
+                "Please verify the AWS account again."
             ),
-        ) from exc
-    
+        )
+
+    # --------------------------------------------------------
+    # 3. Execute query
+    # --------------------------------------------------------
+
+    result = (
+        await query_router.execute(
+            question=(
+                request.question
+            ),
+
+            credentials=(
+                credentials
+            ),
+
+            scan_result=(
+                scan_context
+            ),
+        )
+    )
+
+    return result
+
+
+# ============================================================
+# AWS SESSION STATUS
+# ============================================================
+
+@router.get(
+    "/session/status"
+)
+async def get_aws_session_status(
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
+    """
+    Return whether the backend currently has valid
+    transient AWS credentials for the user.
+
+    Credentials themselves are never exposed.
+    """
+
+    credentials = (
+        await aws_credential_sessions
+        .get(
+            user_id=current_user.id
+        )
+    )
+
+    return {
+        "connected":
+            credentials is not None
+    }
+
+
+# ============================================================
+# DISCONNECT AWS
+# ============================================================
+
+@router.delete(
+    "/session"
+)
+async def disconnect_aws(
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
+    """
+    Remove transient AWS credentials from backend memory.
+
+    Persisted scans, connections and chat history remain.
+    """
+
+    await aws_credential_sessions.remove(
+        user_id=current_user.id
+    )
+
+    return {
+        "status":
+            "DISCONNECTED",
+
+        "message":
+            "AWS live session disconnected.",
+    }

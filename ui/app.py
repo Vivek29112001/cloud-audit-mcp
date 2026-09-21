@@ -1,4 +1,5 @@
 from time import perf_counter
+from html import escape
 
 import requests
 import streamlit as st
@@ -178,6 +179,257 @@ st.markdown(
     hr {
         border-color: #e7edf4;
     }
+
+    /* ========================================================
+       CLEAN CHATGPT-STYLE SIDEBAR
+       ======================================================== */
+
+    section[data-testid="stSidebar"] {
+        min-width: 300px !important;
+        max-width: 300px !important;
+        background: #0c1d33 !important;
+        border-right: 1px solid rgba(255,255,255,0.07);
+    }
+
+    section[data-testid="stSidebar"] > div:first-child {
+        padding-top: 0.5rem;
+    }
+
+    section[data-testid="stSidebar"] .block-container {
+        padding-top: 0.6rem !important;
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
+    }
+
+    section[data-testid="stSidebar"] * {
+        box-sizing: border-box;
+    }
+
+    section[data-testid="stSidebar"] .stMarkdown {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    section[data-testid="stSidebar"] pre,
+    section[data-testid="stSidebar"] code {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    section[data-testid="stSidebar"] .stButton {
+        margin: 0.08rem 0 !important;
+    }
+
+    section[data-testid="stSidebar"] .stButton > button {
+        width: 100%;
+        min-height: 38px;
+        padding: 0.45rem 0.68rem;
+        justify-content: flex-start;
+        text-align: left;
+        border-radius: 9px;
+        border: 1px solid transparent;
+        background: transparent;
+        box-shadow: none;
+        font-size: 0.83rem;
+        font-weight: 600;
+        color: #dbe7f5 !important;
+        transition:
+            background 0.14s ease,
+            border-color 0.14s ease;
+    }
+
+    section[data-testid="stSidebar"] .stButton > button:hover {
+        background: rgba(255,255,255,0.075);
+        border-color: rgba(255,255,255,0.06);
+        transform: none;
+    }
+
+    section[data-testid="stSidebar"] button[kind="primary"] {
+        background: rgba(88,135,255,0.16) !important;
+        border-color: rgba(110,151,255,0.20) !important;
+        color: #ffffff !important;
+    }
+
+    section[data-testid="stSidebar"] button:disabled {
+        opacity: 0.42;
+    }
+
+    .cc-sidebar-brand {
+        padding: 0.35rem 0.15rem 0.55rem 0.15rem;
+    }
+
+    .cc-sidebar-brand-row {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+    }
+
+    .cc-sidebar-logo {
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.09);
+        color: #ffffff;
+        font-size: 1rem;
+    }
+
+    .cc-sidebar-title {
+        color: #ffffff;
+        font-size: 1rem;
+        line-height: 1.2;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+    }
+
+    .cc-sidebar-subtitle {
+        margin-top: 0.13rem;
+        color: #879ab2;
+        font-size: 0.69rem;
+        line-height: 1.2;
+    }
+
+    .cc-sidebar-user {
+        display: flex;
+        align-items: center;
+        gap: 0.58rem;
+        margin: 0.25rem 0 0.75rem 0;
+        padding: 0.58rem 0.62rem;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.045);
+        border: 1px solid rgba(255,255,255,0.055);
+    }
+
+    .cc-user-avatar {
+        width: 30px;
+        height: 30px;
+        flex: 0 0 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: #203b5b;
+        color: #ffffff;
+        font-size: 0.77rem;
+        font-weight: 800;
+    }
+
+    .cc-user-copy {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .cc-user-name {
+        overflow: hidden;
+        color: #f8fbff;
+        font-size: 0.78rem;
+        font-weight: 700;
+        line-height: 1.15;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .cc-user-email {
+        overflow: hidden;
+        margin-top: 0.13rem;
+        color: #8093aa;
+        font-size: 0.65rem;
+        line-height: 1.15;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .cc-sidebar-label {
+        margin: 0.3rem 0.18rem 0.28rem 0.18rem;
+        color: #6f829a;
+        font-size: 0.64rem;
+        font-weight: 800;
+        letter-spacing: 0.075em;
+        text-transform: uppercase;
+    }
+
+    .cc-chat-label {
+        margin-top: 0.65rem;
+    }
+
+    .cc-sidebar-divider {
+        height: 1px;
+        margin: 0.75rem 0 0.65rem 0;
+        background: rgba(255,255,255,0.065);
+    }
+
+    .cc-empty-chats {
+        padding: 0.45rem 0.5rem 0.6rem 0.5rem;
+        color: #8a9cb1;
+        font-size: 0.72rem;
+        line-height: 1.35;
+    }
+
+    .cc-empty-chats span {
+        color: #64778f;
+        font-size: 0.66rem;
+    }
+
+    .cc-footer-divider {
+        margin-top: 0.8rem;
+    }
+
+    .cc-account-card {
+        margin: 0.25rem 0 0.5rem 0;
+        padding: 0.62rem 0.66rem;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.055);
+    }
+
+    .cc-account-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #6f829a;
+        font-size: 0.61rem;
+        font-weight: 800;
+        letter-spacing: 0.065em;
+    }
+
+    .cc-account-dot {
+        color: #54d6a1;
+        font-size: 0.62rem;
+    }
+
+    .cc-account-dot-off {
+        color: #e8b64c;
+    }
+
+    .cc-account-id {
+        overflow: hidden;
+        margin-top: 0.28rem;
+        color: #edf5ff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .cc-account-meta {
+        overflow: hidden;
+        margin-top: 0.17rem;
+        color: #788ba2;
+        font-size: 0.64rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
     </style>
     """,
     unsafe_allow_html=True,
@@ -208,6 +460,204 @@ def get_error_detail(
 
 
 # ============================================================
+# PHASE 2 AUTHENTICATION
+# ============================================================
+
+def get_auth_headers() -> dict[str, str]:
+    """
+    Return the current Bearer token header for authenticated backend calls.
+    """
+    token = st.session_state.get("access_token")
+    if not token:
+        return {}
+
+    return {
+        "Authorization": f"Bearer {token}",
+    }
+
+
+def register_user(
+    username: str,
+    email: str,
+    password: str,
+) -> tuple[bool, str]:
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/auth/register",
+            json={
+                "username": username,
+                "email": email,
+                "password": password,
+            },
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        if response.status_code not in (200, 201):
+            return False, get_error_detail(
+                response,
+                "Unable to register user.",
+            )
+
+        return True, "Registration successful. You can now sign in."
+
+    except requests.RequestException as exc:
+        return False, f"Backend connection failed: {exc}"
+
+
+def login_user(
+    username: str,
+    password: str,
+) -> tuple[bool, str]:
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/auth/login",
+            json={
+                "username": username,
+                "password": password,
+            },
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        if response.status_code != 200:
+            return False, get_error_detail(
+                response,
+                "Unable to sign in.",
+            )
+
+        payload = response.json()
+
+        st.session_state["access_token"] = payload["access_token"]
+        st.session_state["current_user"] = payload["user"]
+
+        return True, "Signed in successfully."
+
+    except requests.RequestException as exc:
+        return False, f"Backend connection failed: {exc}"
+
+
+def logout_user() -> None:
+    """
+    Clear application authentication and transient AWS credentials.
+    """
+    disconnect_aws_backend_session()
+    clear_aws_session()
+
+    for key in (
+        "access_token",
+        "current_user",
+    ):
+        st.session_state.pop(
+            key,
+            None,
+        )
+
+
+def render_auth_screen() -> None:
+    """
+    Phase 2 login/register gate.
+    """
+    st.markdown(
+        """
+        <div class="overview-title">AWS AI Auditor</div>
+        <div class="overview-subtitle">
+            Sign in to access cloud discovery and persisted audit history.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.write("")
+
+    login_tab, register_tab = st.tabs(
+        ["Sign In", "Create Account"]
+    )
+
+    with login_tab:
+        with st.form("phase2_login_form"):
+            login_name = st.text_input(
+                "Username or Email",
+                key="phase2_login_name",
+            )
+
+            login_password = st.text_input(
+                "Password",
+                type="password",
+                key="phase2_login_password",
+            )
+
+            login_clicked = st.form_submit_button(
+                "Sign In",
+                type="primary",
+                use_container_width=True,
+            )
+
+        if login_clicked:
+            if not login_name.strip() or not login_password:
+                st.error("Username/email and password are required.")
+            else:
+                ok, message = login_user(
+                    login_name.strip(),
+                    login_password,
+                )
+
+                if ok:
+                    st.success(message)
+                    st.rerun()
+                else:
+                    st.error(message)
+
+    with register_tab:
+        with st.form("phase2_register_form"):
+            register_username = st.text_input(
+                "Username",
+                key="phase2_register_username",
+            )
+
+            register_email = st.text_input(
+                "Email",
+                key="phase2_register_email",
+            )
+
+            register_password = st.text_input(
+                "Password",
+                type="password",
+                key="phase2_register_password",
+            )
+
+            register_confirm = st.text_input(
+                "Confirm Password",
+                type="password",
+                key="phase2_register_confirm",
+            )
+
+            register_clicked = st.form_submit_button(
+                "Create Account",
+                use_container_width=True,
+            )
+
+        if register_clicked:
+            if not register_username.strip():
+                st.error("Username is required.")
+            elif not register_email.strip():
+                st.error("Email is required.")
+            elif len(register_password) < 8:
+                st.error("Password must contain at least 8 characters.")
+            elif register_password != register_confirm:
+                st.error("Passwords do not match.")
+            else:
+                ok, message = register_user(
+                    register_username.strip(),
+                    register_email.strip(),
+                    register_password,
+                )
+
+                if ok:
+                    st.success(message)
+                else:
+                    st.error(message)
+
+
+# ============================================================
 # AWS VERIFY API
 # ============================================================
 
@@ -231,6 +681,7 @@ def verify_aws_account(
             response = requests.post(
                 f"{API_BASE_URL}/aws/verify",
                 json=payload,
+                headers=get_auth_headers(),
                 timeout=REQUEST_TIMEOUT,
             )
 
@@ -267,7 +718,7 @@ def run_aws_scan(
     Flow:
 
     Streamlit
-        -> FastAPI /api/aws/scan
+        -> FastAPI /api/aws/scans
         -> AWSScanOrchestrator
         -> AWSMCPClient
         -> Official AWS Managed MCP Server
@@ -284,6 +735,7 @@ def run_aws_scan(
             response = requests.post(
                 f"{API_BASE_URL}/aws/scan",
                 json=credentials,
+                headers=get_auth_headers(),
                 timeout=FULL_SCAN_TIMEOUT,
             )
 
@@ -311,22 +763,25 @@ def run_aws_scan(
 # ============================================================
 
 def query_aws_account(
-    credentials: dict,
+    scan_id: str,
     question: str,
-    scan_result: dict,
 ) -> dict | None:
     """
-    Send a natural-language AWS question to the backend.
+    Send a natural-language AWS question using only the persisted scan_id.
+
+    AWS credentials are no longer sent from Streamlit for each query.
+    The backend loads:
+      - scan context from SQLite using scan_id
+      - transient AWS credentials from the authenticated user's server session
 
     The backend remains the source of truth for query timing.
-    We also measure the complete Streamlit -> FastAPI -> Streamlit
-    round-trip so network/UI overhead is visible during development.
+    The UI also measures the complete Streamlit -> FastAPI -> Streamlit
+    round trip for development visibility.
     """
 
     payload = {
-        **credentials,
+        "scan_id": scan_id,
         "question": question,
-        "scan_result": scan_result,
     }
 
     request_started = perf_counter()
@@ -335,6 +790,7 @@ def query_aws_account(
         response = requests.post(
             f"{API_BASE_URL}/aws/query",
             json=payload,
+            headers=get_auth_headers(),
             timeout=FULL_SCAN_TIMEOUT,
         )
 
@@ -359,7 +815,6 @@ def query_aws_account(
                 "answer": str(body),
             }
 
-        # Frontend/network timing is supplemental.
         body["client_round_trip_seconds"] = round_trip_seconds
 
         if response.status_code != 200:
@@ -393,6 +848,259 @@ def query_aws_account(
 
 
 # ============================================================
+# PHASE 2 PERSISTED SCAN HISTORY
+# ============================================================
+
+def get_scan_history() -> list[dict]:
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}/aws/scans",
+            headers=get_auth_headers(),
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        if response.status_code != 200:
+            return []
+
+        payload = response.json()
+        return payload if isinstance(payload, list) else []
+
+    except requests.RequestException:
+        return []
+
+
+def get_persisted_scan(
+    scan_id: str,
+) -> dict | None:
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}/aws/scans/{scan_id}",
+            headers=get_auth_headers(),
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        if response.status_code != 200:
+            return None
+
+        payload = response.json()
+
+        return payload if isinstance(payload, dict) else None
+
+    except requests.RequestException:
+        return None
+
+
+# ============================================================
+# PHASE 2 PERSISTED CHAT API
+# ============================================================
+
+def create_chat(
+    scan_id: str,
+    title: str = "New AWS Chat",
+) -> dict | None:
+    """Create a persisted chat linked to a discovery scan."""
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/chats",
+            json={
+                "scan_id": scan_id,
+                "title": title,
+            },
+            headers=get_auth_headers(),
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        if response.status_code not in (200, 201):
+            st.error(
+                get_error_detail(
+                    response,
+                    "Unable to create chat.",
+                )
+            )
+            return None
+
+        payload = response.json()
+        return payload if isinstance(payload, dict) else None
+
+    except requests.RequestException as exc:
+        st.error(f"Unable to create chat: {exc}")
+        return None
+
+
+def get_chat_history() -> list[dict]:
+    """Return the authenticated user's persisted chat sessions."""
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}/chats",
+            headers=get_auth_headers(),
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        if response.status_code != 200:
+            return []
+
+        payload = response.json()
+        return payload if isinstance(payload, list) else []
+
+    except requests.RequestException:
+        return []
+
+
+def get_chat(
+    chat_id: int,
+) -> dict | None:
+    """Load one chat and its persisted message history."""
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}/chats/{chat_id}",
+            headers=get_auth_headers(),
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        if response.status_code != 200:
+            st.error(
+                get_error_detail(
+                    response,
+                    "Unable to load chat.",
+                )
+            )
+            return None
+
+        payload = response.json()
+        return payload if isinstance(payload, dict) else None
+
+    except requests.RequestException as exc:
+        st.error(f"Unable to load chat: {exc}")
+        return None
+
+
+def query_chat(
+    chat_id: int,
+    question: str,
+) -> dict | None:
+    """Ask a live AWS question inside a persisted chat session."""
+    request_started = perf_counter()
+
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/chats/{chat_id}/query",
+            json={"question": question},
+            headers=get_auth_headers(),
+            timeout=FULL_SCAN_TIMEOUT,
+        )
+
+        round_trip_seconds = round(
+            perf_counter() - request_started,
+            2,
+        )
+
+        try:
+            body = response.json()
+        except ValueError:
+            body = {
+                "status": "ERROR",
+                "answer": f"HTTP {response.status_code}: {response.text}",
+            }
+
+        if not isinstance(body, dict):
+            body = {
+                "status": "ERROR",
+                "answer": str(body),
+            }
+
+        body["client_round_trip_seconds"] = round_trip_seconds
+
+        if response.status_code != 200:
+            detail = body.get("detail")
+            return {
+                **body,
+                "status": str(body.get("status", "ERROR")).upper(),
+                "answer": str(
+                    detail
+                    or body.get("answer")
+                    or "Unable to process the AWS question."
+                ),
+                "raw": body,
+                "client_round_trip_seconds": round_trip_seconds,
+            }
+
+        return body
+
+    except requests.RequestException as exc:
+        return {
+            "status": "ERROR",
+            "answer": f"AWS chat query failed: {exc}",
+            "client_round_trip_seconds": round(
+                perf_counter() - request_started,
+                2,
+            ),
+        }
+
+
+def _open_chat_session(
+    chat_id: int,
+) -> None:
+    """Select a persisted chat and restore its linked scan when necessary."""
+    chat = get_chat(chat_id)
+    if not chat:
+        return
+
+    scan_id = chat.get("scan_id")
+    current_scan = st.session_state.get("aws_scan") or {}
+
+    if scan_id and current_scan.get("scan_id") != scan_id:
+        restored = get_persisted_scan(str(scan_id))
+        if restored:
+            st.session_state["aws_scan"] = restored
+            st.session_state["aws_connection"] = restored.get("account", {})
+
+    st.session_state["active_chat_id"] = chat_id
+    st.session_state["active_page"] = "chat"
+    st.session_state["active_chat"] = chat
+
+
+# ============================================================
+# BACKEND AWS SESSION
+# ============================================================
+
+def get_aws_backend_session_status() -> bool:
+    """Return True when the backend still has active transient AWS credentials."""
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}/aws/session/status",
+            headers=get_auth_headers(),
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        if response.status_code != 200:
+            return False
+
+        payload = response.json()
+        return bool(
+            isinstance(payload, dict)
+            and payload.get("connected") is True
+        )
+
+    except requests.RequestException:
+        return False
+
+
+def disconnect_aws_backend_session() -> None:
+    """Best-effort removal of transient AWS credentials from the backend."""
+    if not st.session_state.get("access_token"):
+        return
+
+    try:
+        requests.delete(
+            f"{API_BASE_URL}/aws/session",
+            headers=get_auth_headers(),
+            timeout=REQUEST_TIMEOUT,
+        )
+    except requests.RequestException:
+        pass
+
+
+# ============================================================
 # SESSION MANAGEMENT
 # ============================================================
 
@@ -407,6 +1115,8 @@ def clear_aws_session() -> None:
         "aws_credentials",
         "aws_scan",
         "aws_chat_history",
+        "active_chat_id",
+        "active_chat",
     ):
         st.session_state.pop(
             key,
@@ -425,6 +1135,14 @@ def clear_scan_results() -> None:
     )
     st.session_state.pop(
         "aws_chat_history",
+        None,
+    )
+    st.session_state.pop(
+        "active_chat_id",
+        None,
+    )
+    st.session_state.pop(
+        "active_chat",
         None,
     )
 
@@ -862,55 +1580,298 @@ def render_app_sidebar(
     aws_connection: dict | None,
     scan_data: dict | None,
 ) -> None:
+    """
+    Compact ChatGPT-style sidebar.
+
+    Important:
+    HTML passed to st.markdown is intentionally kept left-aligned
+    (no Markdown indentation), otherwise Markdown can interpret the
+    indented HTML as a code block and render large white rectangles.
+    """
+
+    if "active_page" not in st.session_state:
+        st.session_state["active_page"] = "home"
+
+    active_page = st.session_state.get(
+        "active_page",
+        "home",
+    )
+
+    active_chat_id = st.session_state.get(
+        "active_chat_id"
+    )
+
+    current_user = st.session_state.get(
+        "current_user",
+        {},
+    )
+
     with st.sidebar:
+
+        # ====================================================
+        # BRAND
+        # ====================================================
+
         st.markdown(
-            """
-            <div style="padding:0.45rem 0 1.1rem 0;">
-                <div style="font-size:1.35rem;font-weight:800;">☁️ AWS AI Auditor</div>
-                <div style="font-size:0.78rem;color:#9fb1c8;margin-top:0.2rem;">
-                    Cloud discovery & live AI queries
-                </div>
-            </div>
-            """,
+            """<div class="cc-sidebar-brand">
+<div class="cc-sidebar-brand-row">
+<div class="cc-sidebar-logo">☁</div>
+<div>
+<div class="cc-sidebar-title">AWS AI Auditor</div>
+<div class="cc-sidebar-subtitle">Cloud audit intelligence</div>
+</div>
+</div>
+</div>""",
             unsafe_allow_html=True,
         )
 
-        st.button("⌂  Home", use_container_width=True, key="nav_home")
-        st.button("⎋  Connect", use_container_width=True, key="nav_connect")
-        st.button("⌕  Discovery", use_container_width=True, key="nav_discovery")
-        st.button("◌  Chat", use_container_width=True, key="nav_chat")
-        st.button("⚙  Settings", use_container_width=True, key="nav_settings")
+        # ====================================================
+        # USER
+        # ====================================================
 
-        st.markdown("<div style='height:22rem'></div>", unsafe_allow_html=True)
+        if current_user:
+            username = escape(
+                str(
+                    current_user.get(
+                        "username",
+                        "User",
+                    )
+                )
+            )
+
+            email = escape(
+                str(
+                    current_user.get(
+                        "email",
+                        "",
+                    )
+                )
+            )
+
+            initial = (
+                username[:1].upper()
+                if username
+                else "U"
+            )
+
+            st.markdown(
+                f"""<div class="cc-sidebar-user">
+<div class="cc-user-avatar">{initial}</div>
+<div class="cc-user-copy">
+<div class="cc-user-name">{username}</div>
+<div class="cc-user-email">{email}</div>
+</div>
+</div>""",
+                unsafe_allow_html=True,
+            )
+
+        # ====================================================
+        # MAIN NAVIGATION
+        # ====================================================
+
+        st.markdown(
+            '<div class="cc-sidebar-label">Workspace</div>',
+            unsafe_allow_html=True,
+        )
+
+        navigation = [
+            ("home", "⌂", "Home"),
+            ("discovery", "⌕", "Discovery"),
+            ("chat", "◌", "Chat"),
+            ("settings", "⚙", "Settings"),
+        ]
+
+        for page_key, icon, title in navigation:
+            selected = active_page == page_key
+
+            if st.button(
+                f"{icon}   {title}",
+                use_container_width=True,
+                key=f"sidebar_nav_{page_key}",
+                type=(
+                    "primary"
+                    if selected
+                    else "secondary"
+                ),
+            ):
+                st.session_state[
+                    "active_page"
+                ] = page_key
+                st.rerun()
+
+        # ====================================================
+        # CHAT HISTORY
+        # ====================================================
+
+        st.markdown(
+            '<div class="cc-sidebar-divider"></div>',
+            unsafe_allow_html=True,
+        )
+
+        can_create_chat = bool(
+            scan_data
+            and scan_data.get("status") == "COMPLETED"
+            and scan_data.get("scan_id")
+        )
+
+        if st.button(
+            "＋  New Chat",
+            use_container_width=True,
+            key="sidebar_new_chat",
+            disabled=not can_create_chat,
+        ):
+            created = create_chat(
+                scan_id=str(
+                    scan_data.get(
+                        "scan_id"
+                    )
+                ),
+                title="New AWS Chat",
+            )
+
+            if created:
+                chat_id = created.get("id")
+
+                st.session_state[
+                    "active_chat_id"
+                ] = chat_id
+
+                st.session_state[
+                    "active_chat"
+                ] = created
+
+                st.session_state[
+                    "active_page"
+                ] = "chat"
+
+                st.rerun()
+
+        st.markdown(
+            '<div class="cc-sidebar-label cc-chat-label">Recent chats</div>',
+            unsafe_allow_html=True,
+        )
+
+        chats = get_chat_history()
+
+        if chats:
+            for chat in chats[:25]:
+                chat_id = chat.get("id")
+
+                if chat_id is None:
+                    continue
+
+                title = str(
+                    chat.get("title")
+                    or f"Chat {chat_id}"
+                ).strip()
+
+                if len(title) > 29:
+                    title = title[:26] + "..."
+
+                is_active = (
+                    active_chat_id
+                    == chat_id
+                )
+
+                if st.button(
+                    (
+                        f"●  {title}"
+                        if is_active
+                        else f"◦  {title}"
+                    ),
+                    use_container_width=True,
+                    key=f"sidebar_chat_{chat_id}",
+                    type=(
+                        "primary"
+                        if is_active
+                        else "secondary"
+                    ),
+                ):
+                    _open_chat_session(
+                        int(chat_id)
+                    )
+                    st.rerun()
+        else:
+            st.markdown(
+                """<div class="cc-empty-chats">
+No saved chats yet.<br>
+<span>Start a chat after discovery.</span>
+</div>""",
+                unsafe_allow_html=True,
+            )
+
+        # ====================================================
+        # ACCOUNT / FOOTER
+        # ====================================================
+
+        st.markdown(
+            '<div class="cc-sidebar-divider cc-footer-divider"></div>',
+            unsafe_allow_html=True,
+        )
 
         if aws_connection:
+            account_id = escape(
+                str(
+                    aws_connection.get(
+                        "account_id",
+                        "-",
+                    )
+                )
+            )
+
+            connection_status = escape(
+                str(
+                    aws_connection.get(
+                        "connection_status",
+                        "VERIFIED",
+                    )
+                )
+            )
+
+            scan_status = (
+                escape(
+                    str(
+                        scan_data.get(
+                            "status",
+                            "UNKNOWN",
+                        )
+                    )
+                )
+                if scan_data
+                else "Not scanned"
+            )
+
             st.markdown(
-                f"""
-                <div style="
-                    border-top:1px solid rgba(255,255,255,.12);
-                    padding-top:1rem;
-                    font-size:.82rem;
-                    color:#c9d5e5;
-                ">
-                    <div style="font-weight:700;color:#fff;">Connected AWS Account</div>
-                    <div style="margin-top:.3rem;">{aws_connection.get("account_id", "-")}</div>
-                    <div style="margin-top:.2rem;color:#79e2b8;">
-                        ● {aws_connection.get("connection_status", "VERIFIED")}
-                    </div>
-                </div>
-                """,
+                f"""<div class="cc-account-card">
+<div class="cc-account-top">
+<span>AWS ACCOUNT</span>
+<span class="cc-account-dot">●</span>
+</div>
+<div class="cc-account-id">{account_id}</div>
+<div class="cc-account-meta">{connection_status} · {scan_status}</div>
+</div>""",
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                """<div class="cc-account-card">
+<div class="cc-account-top">
+<span>AWS ACCOUNT</span>
+<span class="cc-account-dot cc-account-dot-off">●</span>
+</div>
+<div class="cc-account-id">Not connected</div>
+<div class="cc-account-meta">Connect from Home</div>
+</div>""",
                 unsafe_allow_html=True,
             )
 
-        if scan_data:
-            st.markdown(
-                f"""
-                <div style="margin-top:.7rem;font-size:.78rem;color:#aebed3;">
-                    Discovery: {scan_data.get("status", "UNKNOWN")}
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+        if st.button(
+            "↪  Sign Out",
+            use_container_width=True,
+            key="sidebar_sign_out",
+        ):
+            logout_user()
+            st.rerun()
 
 
 def render_template1_overview(
@@ -1189,75 +2150,124 @@ def render_aws_ai_chat(
     aws_connection: dict,
     scan_data: dict,
 ) -> None:
+    """Render the persisted chat interface for the selected chat session."""
 
     if scan_data.get("status") != "COMPLETED":
-        return
-
-    credentials = st.session_state.get(
-        "aws_credentials"
-    )
-
-    if not credentials:
         st.warning(
-            "AWS credentials are no longer available in this session. "
-            "Please verify the account again."
+            "Run or restore a completed discovery scan before opening chat."
         )
         return
 
-    if "aws_chat_history" not in st.session_state:
-        st.session_state["aws_chat_history"] = [
-            {
-                "role": "assistant",
-                "content": (
-                    "Hello! I'm your AWS AI Assistant. "
-                    "Ask me about the AWS infrastructure discovered for this account."
-                ),
-            }
+    scan_id = scan_data.get("scan_id")
+
+    if not scan_id:
+        st.error(
+            "This discovery result does not contain a scan_id. "
+            "Run or restore a persisted scan first."
+        )
+        return
+
+    backend_session_active = get_aws_backend_session_status()
+
+    active_chat_id = st.session_state.get("active_chat_id")
+
+    # If no chat is selected, select the newest chat linked to this scan.
+    if active_chat_id is None:
+        chats = get_chat_history()
+        matching = [
+            item
+            for item in chats
+            if str(item.get("scan_id")) == str(scan_id)
         ]
 
-    st.markdown(
-        "<br>",
-        unsafe_allow_html=True,
+        if matching:
+            active_chat_id = matching[0].get("id")
+            st.session_state["active_chat_id"] = active_chat_id
+        else:
+            created = create_chat(
+                scan_id=str(scan_id),
+                title="New AWS Chat",
+            )
+            if created:
+                active_chat_id = created.get("id")
+                st.session_state["active_chat_id"] = active_chat_id
+
+    chat = (
+        get_chat(int(active_chat_id))
+        if active_chat_id is not None
+        else None
     )
 
-    header_col, clear_col = st.columns(
-        [6, 1]
-    )
+    if not chat:
+        st.info(
+            "Select a chat from the sidebar or create a new chat."
+        )
+        return
+
+    st.session_state["active_chat"] = chat
+
+    header_col, session_col = st.columns([5.6, 1.4])
 
     with header_col:
         st.markdown(
-            """
-            <div class="chat-heading">🤖 AWS AI Assistant</div>
+            f"""
+            <div class="chat-heading">🤖 {chat.get("title") or "AWS AI Assistant"}</div>
             <div class="chat-subtitle">
-                Ask questions about your AWS infrastructure. Live read-only details are fetched through AWS MCP only when needed.
+                Ask follow-up questions naturally. Recent conversation context is used
+                only to understand references; AWS infrastructure answers still come
+                from live read-only AWS MCP queries.
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-    with clear_col:
-        if st.button(
-            "Clear Chat",
-            use_container_width=True,
-            key="clear_aws_chat",
-        ):
-            st.session_state["aws_chat_history"] = [
-                {
-                    "role": "assistant",
-                    "content": (
-                        "Hello! I'm your AWS AI Assistant. "
-                        "What would you like to know about this AWS account?"
-                    ),
-                }
-            ]
-            st.rerun()
+    with session_col:
+        if backend_session_active:
+            st.success("AWS session active")
+        else:
+            st.warning("AWS session expired")
 
-    # Re-render complete persisted chat, including response times and evidence.
-    for message in st.session_state["aws_chat_history"]:
-        _render_chat_message(message)
+    st.caption(
+        f"Chat #{chat.get('id')} · Active scan: {str(scan_id)[:12]}… · "
+        "Messages are saved in SQLite."
+    )
+
+    if not backend_session_active:
+        st.info(
+            "Chat history is still available, but live AWS questions require an "
+            "active AWS credential session. Reconnect the AWS account and run a "
+            "fresh scan to continue live querying."
+        )
+
+    messages = chat.get("messages") or []
+
+    if not messages:
+        with st.chat_message("assistant"):
+            st.markdown(
+                "Hello! I'm your AWS AI Assistant. Ask me about the infrastructure "
+                "discovered for this AWS account."
+            )
+    else:
+        for message in messages:
+            role = str(message.get("role", "assistant"))
+            content = str(message.get("content", ""))
+
+            with st.chat_message(role):
+                st.markdown(content)
+
+                if role == "assistant":
+                    response_time_ms = message.get("response_time_ms")
+                    if response_time_ms is not None:
+                        try:
+                            seconds = float(response_time_ms) / 1000
+                            st.caption(f"⏱ Answered in {seconds:.2f} seconds")
+                        except (TypeError, ValueError):
+                            pass
 
     question = st.chat_input(
-        "Ask anything about your AWS account..."
+        "Ask anything about this AWS account...",
+        disabled=not backend_session_active,
+        key=f"chat_input_{chat.get('id')}",
     )
 
     if not question:
@@ -1267,15 +2277,7 @@ def render_aws_ai_chat(
     if not question:
         return
 
-    user_message = {
-        "role": "user",
-        "content": question,
-    }
-
-    st.session_state["aws_chat_history"].append(
-        user_message
-    )
-
+    # Render the new message immediately in this run.
     with st.chat_message("user"):
         st.markdown(question)
 
@@ -1283,83 +2285,61 @@ def render_aws_ai_chat(
         with st.spinner(
             "Querying the live AWS account through the official AWS MCP Server..."
         ):
-            query_result = query_aws_account(
-                credentials=credentials,
+            query_result = query_chat(
+                chat_id=int(chat.get("id")),
                 question=question,
-                scan_result=scan_data,
             )
 
-        answer = _extract_query_answer(
-            query_result
-        )
+        answer = _extract_query_answer(query_result)
+        query_status = _query_status_label(query_result)
 
-        status = _query_status_label(
-            query_result
-        )
-
-        if status == "SUCCESS":
+        if query_status == "SUCCESS":
             st.markdown(answer)
         else:
             st.warning(answer)
 
         if isinstance(query_result, dict):
-            _render_query_timing(
-                query_result
-            )
+            _render_query_timing(query_result)
 
             with st.expander(
                 "View AWS evidence",
                 expanded=False,
             ):
-                _render_query_evidence(
-                    query_result
-                )
+                _render_query_evidence(query_result)
 
-    assistant_message = {
-        "role": "assistant",
-        "content": answer,
-    }
+    # Reload persisted history so sidebar/chat stay in sync.
+    refreshed = get_chat(int(chat.get("id")))
+    if refreshed:
+        st.session_state["active_chat"] = refreshed
 
-    # Persist the complete structured response so timing/evidence does not
-    # disappear when Streamlit reruns on the next user interaction.
-    if isinstance(query_result, dict):
-        assistant_message["result"] = (
-            query_result
-        )
-
-    st.session_state["aws_chat_history"].append(
-        assistant_message
-    )
+    st.rerun()
 
 
 # ============================================================
-# HEADER / APPLICATION SHELL
+# PAGE RENDERERS
 # ============================================================
 
-aws_connection = st.session_state.get(
-    "aws_connection"
-)
+def render_home_page(
+    aws_connection: dict | None,
+    scan_data: dict | None,
+) -> None:
+    """
+    Home also acts as the AWS connection page.
 
-scan_data = st.session_state.get(
-    "aws_scan"
-)
+    When no AWS account is connected:
+        show the AWS credential form.
 
-render_app_sidebar(
-    aws_connection=aws_connection,
-    scan_data=scan_data,
-)
-
-# ============================================================
-# CONNECT / VERIFY
-# ============================================================
-
-if not aws_connection:
+    When an account is connected:
+        show account/discovery overview and quick actions.
+    """
 
     st.markdown(
         """
-        <div class="overview-title">Connect AWS Account</div>
+        <div class="overview-title">AWS AI Auditor</div>
         <div class="overview-subtitle">
-            Verify the client AWS account through the official AWS Managed MCP Server.
+            Connect a client AWS account, discover its infrastructure,
+            and ask live read-only audit questions through the official
+            AWS Managed MCP Server.
         </div>
         """,
         unsafe_allow_html=True,
@@ -1367,155 +2347,270 @@ if not aws_connection:
 
     st.write("")
 
-    with st.form(
-        "aws_connection_form"
-    ):
-        st.subheader(
-            "AWS Credentials"
+    # ========================================================
+    # NOT CONNECTED -> CONNECT DIRECTLY FROM HOME
+    # ========================================================
+
+    if not aws_connection:
+
+        st.info(
+            "No AWS account is connected. "
+            "Enter the client credentials below to begin."
         )
 
-        access_key_id = st.text_input(
-            "AWS Access Key ID",
-            placeholder="AKIA...",
-        )
-
-        secret_access_key = st.text_input(
-            "AWS Secret Access Key",
-            type="password",
-        )
-
-        session_token = st.text_input(
-            "AWS Session Token (optional)",
-            type="password",
-        )
-
-        connect = st.form_submit_button(
-            "Verify AWS Account",
-            type="primary",
-            use_container_width=True,
-        )
-
-    if connect:
-        if (
-            not access_key_id
-            or not secret_access_key
+        with st.form(
+            "home_aws_connection_form"
         ):
-            st.error(
-                "Access Key ID and Secret Access Key are required."
+            st.subheader(
+                "Connect AWS Account"
             )
 
-        else:
-            credentials_payload = {
-                "access_key_id": access_key_id.strip(),
-                "secret_access_key": secret_access_key,
-                "session_token": (
-                    session_token.strip()
-                    if session_token.strip()
-                    else None
-                ),
-            }
-
-            verification_data = verify_aws_account(
-                credentials_payload
+            access_key_id = st.text_input(
+                "AWS Access Key ID",
+                placeholder="AKIA...",
             )
 
-            if verification_data:
-                clear_scan_results()
+            secret_access_key = (
+                st.text_input(
+                    "AWS Secret Access Key",
+                    type="password",
+                )
+            )
 
-                st.session_state[
-                    "aws_connection"
-                ] = verification_data
+            session_token = (
+                st.text_input(
+                    "AWS Session Token (optional)",
+                    type="password",
+                )
+            )
 
-                st.session_state[
-                    "aws_credentials"
-                ] = credentials_payload
+            connect_clicked = (
+                st.form_submit_button(
+                    "Verify AWS Account",
+                    type="primary",
+                    use_container_width=True,
+                )
+            )
 
-                st.success(
-                    "AWS account verified successfully."
+        if connect_clicked:
+
+            if (
+                not access_key_id
+                or not secret_access_key
+            ):
+                st.error(
+                    "Access Key ID and Secret Access Key are required."
                 )
 
-                st.rerun()
+            else:
+                credentials_payload = {
+                    "access_key_id":
+                        access_key_id.strip(),
 
-    st.info(
-        "The UI does not call AWS APIs, boto3, or AWS CLI directly. "
-        "AWS verification remains handled by the existing backend and "
-        "the official AWS Managed MCP Server."
+                    "secret_access_key":
+                        secret_access_key,
+
+                    "session_token":
+                        (
+                            session_token.strip()
+                            if session_token.strip()
+                            else None
+                        ),
+                }
+
+                verification_data = (
+                    verify_aws_account(
+                        credentials_payload
+                    )
+                )
+
+                if verification_data:
+                    clear_scan_results()
+
+                    st.session_state[
+                        "aws_connection"
+                    ] = verification_data
+
+                    st.session_state[
+                        "aws_credentials"
+                    ] = credentials_payload
+
+                    st.success(
+                        "AWS account verified successfully."
+                    )
+
+                    st.rerun()
+
+        return
+
+    # ========================================================
+    # CONNECTED ACCOUNT SUMMARY
+    # ========================================================
+
+    account_id = aws_connection.get(
+        "account_id",
+        "-",
     )
 
-# ============================================================
-# VERIFIED ACCOUNT / DISCOVERY
-# ============================================================
-
-else:
-    title_col, disconnect_col = st.columns(
-        [5.5, 1]
+    top_cols = st.columns(
+        [2.2, 1, 1]
     )
 
-    with title_col:
-        st.markdown(
-            """
-            <div class="overview-title">AWS AI Auditor</div>
-            <div class="overview-subtitle">
-                Discover the account first, then ask targeted infrastructure questions.
-            </div>
-            """,
-            unsafe_allow_html=True,
+    with top_cols[0]:
+        st.success(
+            f"AWS account {account_id} is connected."
         )
 
-    with disconnect_col:
-        disconnect_clicked = st.button(
-            "Disconnect",
+    with top_cols[1]:
+        st.metric(
+            "Provider",
+            aws_connection.get(
+                "provider",
+                "AWS",
+            ),
+        )
+
+    with top_cols[2]:
+        st.metric(
+            "Status",
+            aws_connection.get(
+                "connection_status",
+                "VERIFIED",
+            ),
+        )
+
+    with st.expander(
+        "AWS connection details",
+        expanded=False,
+    ):
+        st.write(
+            f"**Account ID:** {account_id}"
+        )
+
+        st.write(
+            "**Caller ARN:** "
+            f"{aws_connection.get('arn', 'ARN not returned')}"
+        )
+
+        st.write(
+            "**Backend session:** "
+            + (
+                "Active"
+                if get_aws_backend_session_status()
+                else "Not active"
+            )
+        )
+
+        if st.button(
+            "Disconnect AWS Account",
             use_container_width=True,
-            key="disconnect_account",
+            key="home_disconnect_aws",
+        ):
+            disconnect_aws_backend_session()
+            clear_aws_session()
+            st.session_state[
+                "active_page"
+            ] = "home"
+            st.rerun()
+
+    # ========================================================
+    # CONNECTED BUT NO DISCOVERY
+    # ========================================================
+
+    if not scan_data:
+        st.write("")
+
+        st.info(
+            "The AWS account is verified. "
+            "Run Discovery to establish Regions, Availability Zones, "
+            "services, and lightweight resource context."
         )
 
-    if disconnect_clicked:
-        clear_aws_session()
-        st.rerun()
+        if st.button(
+            "Open Discovery",
+            type="primary",
+            use_container_width=True,
+            key="home_open_discovery",
+        ):
+            st.session_state[
+                "active_page"
+            ] = "discovery"
+
+            st.rerun()
+
+        return
+
+    # ========================================================
+    # COMPLETED / EXISTING DISCOVERY
+    # ========================================================
 
     st.write("")
 
+    render_template1_overview(
+        aws_connection=aws_connection,
+        scan_data=scan_data,
+    )
+
+    if (
+        scan_data.get("status")
+        == "COMPLETED"
+    ):
+        st.write("")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button(
+                "Open Chat",
+                type="primary",
+                use_container_width=True,
+                key="home_open_chat",
+            ):
+                st.session_state[
+                    "active_page"
+                ] = "chat"
+
+                st.rerun()
+
+        with col2:
+            if st.button(
+                "View Discovery Details",
+                use_container_width=True,
+                key="home_view_discovery",
+            ):
+                st.session_state[
+                    "active_page"
+                ] = "discovery"
+
+                st.rerun()
+
+
+def render_discovery_page(
+    aws_connection: dict | None,
+    scan_data: dict | None,
+) -> None:
+    st.markdown(
+        """
+        <div class="overview-title">AWS Discovery</div>
+        <div class="overview-subtitle">
+            Establish the lightweight AWS account context used by live NLP queries.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.write("")
+
+    if not aws_connection:
+        st.info("Connect an AWS account before running discovery.")
+        if st.button("Go to Connect", type="primary"):
+            st.session_state["active_page"] = "connect"
+            st.rerun()
+        return
+
     if not scan_data:
-
-        account_col1, account_col2, account_col3 = st.columns(3)
-
-        with account_col1:
-            st.metric(
-                "Cloud Provider",
-                aws_connection.get(
-                    "provider",
-                    "AWS",
-                ),
-            )
-
-        with account_col2:
-            st.metric(
-                "AWS Account",
-                aws_connection.get(
-                    "account_id",
-                    "-",
-                ),
-            )
-
-        with account_col3:
-            st.metric(
-                "Status",
-                aws_connection.get(
-                    "connection_status",
-                    "VERIFIED",
-                ),
-            )
-
-        st.caption(
-            "Caller Identity"
-        )
-
-        st.code(
-            aws_connection.get(
-                "arn",
-                "ARN not returned",
-            ),
-            language=None,
+        st.success(
+            f"Connected to AWS account {aws_connection.get('account_id', '-')}"
         )
 
         run_scan_clicked = st.button(
@@ -1526,82 +2621,217 @@ else:
         )
 
         if run_scan_clicked:
-            credentials = st.session_state.get(
-                "aws_credentials"
-            )
+            credentials = st.session_state.get("aws_credentials")
 
             if not credentials:
                 st.error(
                     "AWS credentials are no longer available in this session. "
                     "Please verify the account again."
                 )
-
             else:
-                new_scan_data = run_aws_scan(
-                    credentials
-                )
+                new_scan_data = run_aws_scan(credentials)
 
                 if new_scan_data:
-                    st.session_state[
-                        "aws_scan"
-                    ] = new_scan_data
+                    st.session_state["aws_scan"] = new_scan_data
 
-                    if (
-                        new_scan_data.get(
-                            "status"
-                        )
-                        == "COMPLETED"
-                    ):
-                        st.success(
-                            "AWS discovery completed successfully."
-                        )
+                    if new_scan_data.get("status") == "COMPLETED":
+                        st.success("AWS discovery completed successfully.")
                     else:
-                        st.error(
-                            "AWS discovery did not complete successfully."
-                        )
+                        st.error("AWS discovery did not complete successfully.")
 
                     st.rerun()
 
-        st.info(
-            "The discovery scan only establishes the account context, "
-            "Regions, Availability Zones, detected services and lightweight "
-            "resource metadata. Detailed configuration is queried later from chat."
+        return
+
+    render_template1_overview(
+        aws_connection=aws_connection,
+        scan_data=scan_data,
+    )
+
+    render_scan_status(
+        aws_connection=aws_connection,
+        scan_data=scan_data,
+        region_data=scan_data.get("regions"),
+        zone_data=scan_data.get("zones"),
+        resource_data=scan_data.get("resources"),
+    )
+    render_region_results(scan_data.get("regions"))
+    render_zone_results(scan_data.get("zones"))
+    render_resource_inventory(scan_data.get("resources"))
+    render_scan_warnings(scan_data.get("warnings") or [])
+
+    if scan_data.get("status") == "COMPLETED":
+        st.write("")
+        if st.button(
+            "Open AI Chat",
+            type="primary",
+            use_container_width=True,
+        ):
+            st.session_state["active_page"] = "chat"
+            st.rerun()
+
+
+def render_settings_page(
+    aws_connection: dict | None,
+    scan_data: dict | None,
+) -> None:
+    st.markdown(
+        """
+        <div class="overview-title">Settings</div>
+        <div class="overview-subtitle">
+            Current authenticated and AWS runtime session state.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.write("")
+    user = st.session_state.get("current_user") or {}
+    st.write(f"**Signed in user:** {user.get('username', '-')}")
+    st.write(f"**Email:** {user.get('email', '-')}")
+    st.write(
+        "**AWS backend session:** "
+        + ("Active" if get_aws_backend_session_status() else "Not active")
+    )
+
+    if aws_connection:
+        st.write(f"**AWS account:** {aws_connection.get('account_id', '-')}")
+
+    if scan_data:
+        st.write(f"**Active scan:** {scan_data.get('scan_id', '-')}")
+
+
+# ============================================================
+# PHASE 2 AUTHENTICATION GATE
+# ============================================================
+
+if not st.session_state.get("access_token"):
+    render_auth_screen()
+    st.stop()
+
+
+# ============================================================
+# APPLICATION SESSION DEFAULTS
+# ============================================================
+
+if "active_page" not in st.session_state:
+    st.session_state["active_page"] = "home"
+
+
+# ============================================================
+# APPLICATION SHELL
+# ============================================================
+
+aws_connection = st.session_state.get("aws_connection")
+scan_data = st.session_state.get("aws_scan")
+
+render_app_sidebar(
+    aws_connection=aws_connection,
+    scan_data=scan_data,
+)
+
+# Sidebar actions can rerun and change session state, so refresh local state.
+aws_connection = st.session_state.get("aws_connection")
+scan_data = st.session_state.get("aws_scan")
+active_page = st.session_state.get("active_page", "home")
+
+# Persisted discovery history remains available from every page.
+with st.sidebar:
+    if active_page != "chat":
+        persisted_scans = get_scan_history()
+
+        if persisted_scans:
+            with st.expander(
+                "Previous Discovery Scans",
+                expanded=False,
+            ):
+                for item in persisted_scans[:10]:
+                    account = item.get("account") or {}
+                    account_id = account.get("account_id", "AWS")
+                    scan_id = item.get("scan_id")
+
+                    if not scan_id:
+                        continue
+
+                    label = f"{account_id} · {str(scan_id)[:8]}"
+
+                    if st.button(
+                        label,
+                        use_container_width=True,
+                        key=f"restore_scan_{scan_id}",
+                    ):
+                        restored = get_persisted_scan(scan_id)
+
+                        if restored:
+                            st.session_state["aws_scan"] = restored
+                            st.session_state["aws_connection"] = restored.get(
+                                "account",
+                                {},
+                            )
+                            st.session_state["active_page"] = "discovery"
+                            st.rerun()
+
+
+# ============================================================
+# PAGE ROUTER
+# ============================================================
+
+if active_page == "discovery":
+    render_discovery_page(
+        aws_connection=aws_connection,
+        scan_data=scan_data,
+    )
+
+elif active_page == "chat":
+    if (
+        not scan_data
+        or scan_data.get("status") != "COMPLETED"
+    ):
+        st.markdown(
+            """
+            <div class="overview-title">AWS AI Chat</div>
+            <div class="overview-subtitle">
+                Chat requires a completed discovery scan.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
+        st.info(
+            "Run or restore a completed AWS discovery scan first."
+        )
+
+        if st.button(
+            "Open Discovery",
+            type="primary",
+        ):
+            st.session_state[
+                "active_page"
+            ] = "discovery"
+
+            st.rerun()
+
     else:
-        render_template1_overview(
-            aws_connection=aws_connection,
+        render_aws_ai_chat(
+            aws_connection=(
+                aws_connection
+                or {}
+            ),
             scan_data=scan_data,
         )
 
-        warnings = (
-            scan_data.get(
-                "warnings",
-                [],
-            )
-            or []
-        )
+elif active_page == "settings":
+    render_settings_page(
+        aws_connection=aws_connection,
+        scan_data=scan_data,
+    )
 
-        if warnings:
-            with st.expander(
-                f"Discovery warnings ({len(warnings)})"
-            ):
-                for warning in warnings:
-                    st.warning(
-                        warning
-                    )
+else:
+    #
+    # Home is also the AWS Connect page.
+    #
+    render_home_page(
+        aws_connection=aws_connection,
+        scan_data=scan_data,
+    )
 
-        if (
-            scan_data.get("status")
-            == "COMPLETED"
-        ):
-            render_aws_ai_chat(
-                aws_connection=aws_connection,
-                scan_data=scan_data,
-            )
-
-        else:
-            st.error(
-                "The AWS discovery did not complete successfully. "
-                "Reconnect or run the scan again after resolving the reported issue."
-            )

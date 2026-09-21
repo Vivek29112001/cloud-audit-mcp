@@ -71,3 +71,5 @@ async def me(
         email=current_user.email,
         is_active=current_user.is_active,
     )
+    
+    

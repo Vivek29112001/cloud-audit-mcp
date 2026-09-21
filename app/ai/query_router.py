@@ -6,22 +6,28 @@ from typing import Any
 from app.ai.answer_generator import (
     GroqAnswerGenerator,
 )
+
 from app.ai.groq_client import (
     GroqIntentClient,
 )
+
 from app.providers.aws.credentials import (
     AWSCredentials,
 )
+
 from app.providers.aws.mcp_client import (
     AWSMCPClient,
 )
+
 from app.providers.aws.query.multi_region_executor import (
     AWSMultiRegionQueryExecutor,
 )
+
 from app.providers.aws.query.read_only_validator import (
     AWSReadOnlyOperationValidator,
     UnsafeAWSOperationError,
 )
+
 from app.providers.aws.query.region_resolver import (
     AWSQueryRegionResolver,
 )
@@ -64,14 +70,23 @@ class AWSQueryRouter:
         question: str,
         credentials: AWSCredentials,
         scan_result: dict[str, Any],
+        conversation_context: str | None = None,
     ) -> dict[str, Any]:
 
         #
-        # Total query timer
+        # -------------------------------------------------
+        # TOTAL QUERY TIMER
+        # -------------------------------------------------
         #
-        query_started = perf_counter()
 
-        timings: dict[str, int] = {}
+        query_started = (
+            perf_counter()
+        )
+
+        timings: dict[
+            str,
+            int,
+        ] = {}
 
         #
         # -------------------------------------------------
@@ -79,19 +94,54 @@ class AWSQueryRouter:
         # -------------------------------------------------
         #
 
-        stage_started = perf_counter()
-
-        intent = (
-            self._intent_client
-            .parse_aws_question(
-                question
-            )
+        stage_started = (
+            perf_counter()
         )
 
-        timings["intent_ms"] = (
-            self._elapsed_ms(
+        try:
+
+            intent = (
+                self._intent_client
+                .parse_aws_question(
+                    question,
+                    conversation_context=(
+                        conversation_context
+                    ),
+                )
+            )
+
+        except Exception as exc:
+
+            timings[
+                "intent_ms"
+            ] = self._elapsed_ms(
                 stage_started
             )
+
+            return self._error_response(
+                query_started=(
+                    query_started
+                ),
+
+                timings=timings,
+
+                status=(
+                    "INTENT_PLANNING_FAILED"
+                ),
+
+                intent={},
+
+                answer=(
+                    "Unable to understand the "
+                    "AWS question: "
+                    f"{exc}"
+                ),
+            )
+
+        timings[
+            "intent_ms"
+        ] = self._elapsed_ms(
+            stage_started
         )
 
         service = (
@@ -121,13 +171,25 @@ class AWSQueryRouter:
         except UnsafeAWSOperationError as exc:
 
             return self._error_response(
-                query_started=query_started,
-                timings=timings,
-                status="OPERATION_BLOCKED",
-                intent=intent.model_dump(
-                    mode="json"
+                query_started=(
+                    query_started
                 ),
-                answer=str(exc),
+
+                timings=timings,
+
+                status=(
+                    "OPERATION_BLOCKED"
+                ),
+
+                intent=(
+                    intent.model_dump(
+                        mode="json"
+                    )
+                ),
+
+                answer=str(
+                    exc
+                ),
             )
 
         #
@@ -140,45 +202,63 @@ class AWSQueryRouter:
             scan_result
             .get(
                 "resources",
-                {}
+                {},
             )
             .get(
                 "detected_services",
-                []
+                [],
             )
         )
 
         service_entry = next(
             (
                 item
+
                 for item
                 in detected_services
-                if item.get(
-                    "service",
-                    ""
-                ).lower()
-                == service
+
+                if (
+                    item.get(
+                        "service",
+                        "",
+                    )
+                    .strip()
+                    .lower()
+                    == service
+                )
             ),
             None,
         )
 
         if (
             not service_entry
+
             and service
             not in self.ACCOUNT_LEVEL_SERVICES
         ):
 
             return self._error_response(
-                query_started=query_started,
-                timings=timings,
-                status="SERVICE_NOT_DETECTED",
-                intent=intent.model_dump(
-                    mode="json"
+                query_started=(
+                    query_started
                 ),
+
+                timings=timings,
+
+                status=(
+                    "SERVICE_NOT_DETECTED"
+                ),
+
+                intent=(
+                    intent.model_dump(
+                        mode="json"
+                    )
+                ),
+
                 answer=(
                     f"No {service.upper()} "
                     "resources were detected "
-                    "in the latest discovery scan."
+                    "in the latest discovery "
+                    "scan."
                 ),
             )
 
@@ -192,9 +272,11 @@ class AWSQueryRouter:
             self._region_resolver
             .resolve(
                 service=service,
+
                 requested_region=(
                     intent.region
                 ),
+
                 service_entry=(
                     service_entry
                 ),
@@ -204,16 +286,27 @@ class AWSQueryRouter:
         if not target_regions:
 
             return self._error_response(
-                query_started=query_started,
-                timings=timings,
-                status="NO_QUERY_REGION",
-                intent=intent.model_dump(
-                    mode="json"
+                query_started=(
+                    query_started
                 ),
+
+                timings=timings,
+
+                status=(
+                    "NO_QUERY_REGION"
+                ),
+
+                intent=(
+                    intent.model_dump(
+                        mode="json"
+                    )
+                ),
+
                 answer=(
-                    "The query service was detected, "
-                    "but no usable AWS Region could "
-                    "be resolved."
+                    "The query service was "
+                    "detected, but no usable "
+                    "AWS Region could be "
+                    "resolved."
                 ),
             )
 
@@ -221,14 +314,14 @@ class AWSQueryRouter:
         # -------------------------------------------------
         # 5. OFFICIAL AWS MCP EXECUTION
         #
-        # Important:
-        # Open MCP ONCE for this complete NLP query.
-        #
-        # All Region queries reuse this same session.
+        # One MCP session is opened for the entire query.
+        # All Region operations reuse the same session.
         # -------------------------------------------------
         #
 
-        stage_started = perf_counter()
+        stage_started = (
+            perf_counter()
+        )
 
         try:
 
@@ -239,44 +332,63 @@ class AWSQueryRouter:
                 execution = (
                     await self._executor
                     .execute(
-                        credentials=credentials,
+                        credentials=(
+                            credentials
+                        ),
+
                         service=service,
+
                         operation=operation,
-                        regions=target_regions,
 
-                        # Use decoded params_json
-                        params=intent.get_params(),
+                        regions=(
+                            target_regions
+                        ),
 
-                        # Reuse this ONE MCP session
+                        params=(
+                            intent
+                            .get_params()
+                        ),
+
                         mcp=mcp,
                     )
                 )
 
         except Exception as exc:
 
-            timings["aws_mcp_ms"] = (
-                self._elapsed_ms(
-                    stage_started
-                )
+            timings[
+                "aws_mcp_ms"
+            ] = self._elapsed_ms(
+                stage_started
             )
 
             return self._error_response(
-                query_started=query_started,
-                timings=timings,
-                status="AWS_MCP_EXECUTION_FAILED",
-                intent=intent.model_dump(
-                    mode="json"
+                query_started=(
+                    query_started
                 ),
+
+                timings=timings,
+
+                status=(
+                    "AWS_MCP_EXECUTION_FAILED"
+                ),
+
+                intent=(
+                    intent.model_dump(
+                        mode="json"
+                    )
+                ),
+
                 answer=(
-                    "AWS MCP query execution failed: "
+                    "AWS MCP query execution "
+                    "failed: "
                     f"{exc}"
                 ),
             )
 
-        timings["aws_mcp_ms"] = (
-            self._elapsed_ms(
-                stage_started
-            )
+        timings[
+            "aws_mcp_ms"
+        ] = self._elapsed_ms(
+            stage_started
         )
 
         execution_dict = (
@@ -285,35 +397,24 @@ class AWSQueryRouter:
             )
         )
 
+        #
+        # -------------------------------------------------
+        # 6. VERIFY AT LEAST ONE REGION SUCCEEDED
+        # -------------------------------------------------
+        #
+
         if not execution.successful_regions:
 
             return self._error_response(
-                query_started=query_started,
+                query_started=(
+                    query_started
+                ),
+
                 timings=timings,
-                status="AWS_QUERY_FAILED",
-                intent=intent.model_dump(
-                    mode="json"
+
+                status=(
+                    "AWS_QUERY_FAILED"
                 ),
-                answer=(
-                    "The AWS query failed in "
-                    "all target Regions."
-                ),
-                data=execution_dict,
-                warnings=execution.warnings,
-            )
-
-        #
-        # -------------------------------------------------
-        # 6. GROQ ANSWER FORMATTING
-        # -------------------------------------------------
-        #
-
-        stage_started = perf_counter()
-
-        answer = (
-            self._answer_generator
-            .generate(
-                question=question,
 
                 intent=(
                     intent.model_dump(
@@ -321,64 +422,148 @@ class AWSQueryRouter:
                     )
                 ),
 
-                aws_result=(
+                answer=(
+                    "The AWS query failed in "
+                    "all target Regions."
+                ),
+
+                data=(
                     execution_dict
                 ),
+
+                warnings=(
+                    execution.warnings
+                ),
             )
+
+        #
+        # -------------------------------------------------
+        # 7. GROQ ANSWER FORMATTING
+        # -------------------------------------------------
+        #
+
+        stage_started = (
+            perf_counter()
         )
 
-        timings["answer_ms"] = (
-            self._elapsed_ms(
+        try:
+
+            answer = (
+                self._answer_generator
+                .generate(
+                    question=question,
+
+                    intent=(
+                        intent.model_dump(
+                            mode="json"
+                        )
+                    ),
+
+                    aws_result=(
+                        execution_dict
+                    ),
+                )
+            )
+
+        except Exception as exc:
+
+            timings[
+                "answer_ms"
+            ] = self._elapsed_ms(
                 stage_started
             )
+
+            return self._error_response(
+                query_started=(
+                    query_started
+                ),
+
+                timings=timings,
+
+                status=(
+                    "ANSWER_GENERATION_FAILED"
+                ),
+
+                intent=(
+                    intent.model_dump(
+                        mode="json"
+                    )
+                ),
+
+                answer=(
+                    "AWS data was retrieved, "
+                    "but answer formatting "
+                    "failed: "
+                    f"{exc}"
+                ),
+
+                data=(
+                    execution_dict
+                ),
+
+                warnings=(
+                    execution.warnings
+                ),
+            )
+
+        timings[
+            "answer_ms"
+        ] = self._elapsed_ms(
+            stage_started
         )
 
         #
         # -------------------------------------------------
-        # 7. TOTAL RESPONSE TIME
+        # 8. TOTAL RESPONSE TIME
         # -------------------------------------------------
         #
 
-        timings["total_ms"] = (
-            self._elapsed_ms(
-                query_started
-            )
+        timings[
+            "total_ms"
+        ] = self._elapsed_ms(
+            query_started
         )
 
         return {
-            "status": "SUCCESS",
+            "status":
+                "SUCCESS",
 
-            "intent": (
+            "intent":
                 intent.model_dump(
                     mode="json"
-                )
-            ),
+                ),
 
-            "answer": answer,
+            "answer":
+                answer,
 
-            "data": execution_dict,
+            "data":
+                execution_dict,
 
-            "warnings": (
-                execution.warnings
-            ),
+            "warnings":
+                execution.warnings,
 
             #
             # Developer timing breakdown
             #
-            "timings": timings,
+            "timings":
+                timings,
 
             #
             # Easy frontend display
             #
-            "response_time_ms": (
-                timings["total_ms"]
-            ),
+            "response_time_ms":
+                timings[
+                    "total_ms"
+                ],
 
-            "response_time_seconds": round(
-                timings["total_ms"]
-                / 1000,
-                2,
-            ),
+            "response_time_seconds":
+                round(
+                    timings[
+                        "total_ms"
+                    ]
+                    / 1000,
+                    2,
+                ),
         }
 
     @staticmethod
@@ -404,40 +589,56 @@ class AWSQueryRouter:
         intent: dict[str, Any],
         answer: str,
         data: Any = None,
-        warnings: list[str] | None = None,
+        warnings: (
+            list[str] | None
+        ) = None,
     ) -> dict[str, Any]:
 
-        timings["total_ms"] = (
-            cls._elapsed_ms(
-                query_started
-            )
+        timings[
+            "total_ms"
+        ] = cls._elapsed_ms(
+            query_started
         )
 
-        response = {
-            "status": status,
+        response: dict[
+            str,
+            Any,
+        ] = {
 
-            "intent": intent,
+            "status":
+                status,
 
-            "answer": answer,
+            "intent":
+                intent,
 
-            "warnings": (
-                warnings or []
-            ),
+            "answer":
+                answer,
 
-            "timings": timings,
+            "warnings":
+                warnings or [],
 
-            "response_time_ms": (
-                timings["total_ms"]
-            ),
+            "timings":
+                timings,
 
-            "response_time_seconds": round(
-                timings["total_ms"]
-                / 1000,
-                2,
-            ),
+            "response_time_ms":
+                timings[
+                    "total_ms"
+                ],
+
+            "response_time_seconds":
+                round(
+                    timings[
+                        "total_ms"
+                    ]
+                    / 1000,
+                    2,
+                ),
         }
 
         if data is not None:
-            response["data"] = data
+
+            response[
+                "data"
+            ] = data
 
         return response
