@@ -890,3 +890,74 @@ Your `app/main.py` should include:
 from fastapi import FastAPI
 from app.api.aws import router as aws_router
 ```
+
+---
+
+## Dynamic Billing-Aware Service / Region Classification
+
+The AWS scan now correlates three independent evidence sources instead of using a hard-coded service catalog:
+
+1. **Resource Explorer** - what resources/services currently exist.
+2. **Cost Explorer** - which billing services and Regions have actual `UnblendedCost`.
+3. **Resource property references** - generic ARN/resource-ID relationships discovered from Resource Explorer properties.
+
+### Classification rules
+
+- `PRIMARY_PAID`: a dynamically discovered service matched to one or more Cost Explorer `SERVICE` values whose combined cost is greater than zero.
+- `PRIMARY_PAID_BILLING_ONLY`: a Cost Explorer service with positive cost that cannot be reliably matched to a Resource Explorer service. It is retained rather than discarded.
+- `SUPPORTING_RELATED`: a discovered service with no positive direct cost that has a resource-reference relationship to a paid discovered service.
+- `DISCOVERED_UNBILLED`: a discovered service with no positive direct cost and no proven relationship to a paid service.
+- `PAID_PRIMARY`: a Region with positive Cost Explorer cost.
+- `USED_UNBILLED`: a Region containing discovered resources but no positive billing amount in the selected billing period.
+- `ENABLED_UNUSED`: an enabled Region with neither discovered resources nor positive billing amount.
+
+The matcher does **not** contain mappings such as `EC2 -> Amazon Elastic Compute Cloud` or `S3 -> Amazon Simple Storage Service`. It derives candidate aliases from the live billing service name itself using normalization, contiguous words, and acronym/run-length generation. Uncertain names remain billing-only instead of being force-matched.
+
+### Billing period
+
+The scan uses the current calendar month up to today (end date is exclusive because Cost Explorer data is not real-time). On the first day of a month, the previous full month is used.
+
+### Additional read-only IAM permissions
+
+To enable billing classification, the supplied audit principal must be allowed to call:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "ce:GetCostAndUsage",
+    "ce:GetDimensionValues"
+  ],
+  "Resource": "*"
+}
+```
+
+If these permissions are absent, the infrastructure scan still completes and returns `billing.available=false` with a warning. No AWS credentials are persisted by this feature.
+
+### New response sections
+
+`POST /api/aws/scan` and `GET /api/aws/scans/{scan_id}` now include:
+
+```text
+billing
+classification
+  primary_paid_services
+  supporting_services
+  discovered_unbilled_services
+  non_positive_billing_services
+  paid_regions
+  used_unbilled_regions
+  enabled_unused_regions
+  billed_only_regions
+  relationships
+```
+
+### Database migration
+
+Run before starting an upgraded existing installation:
+
+```bash
+alembic upgrade head
+```
+
+This adds `billing_json` and `classification_json` to `aws_scans`.

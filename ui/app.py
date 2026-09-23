@@ -890,6 +890,67 @@ def get_persisted_scan(
         return None
 
 
+def get_active_scan(
+    account_id: str | None = None,
+) -> dict | None:
+    """Restore the persisted active snapshot without triggering AWS discovery."""
+    try:
+        params = {"account_id": account_id} if account_id else None
+        response = requests.get(
+            f"{API_BASE_URL}/aws/scans/active",
+            params=params,
+            headers=get_auth_headers(),
+            timeout=REQUEST_TIMEOUT,
+        )
+        if response.status_code == 404:
+            return None
+        if response.status_code != 200:
+            return None
+        payload = response.json()
+        return payload if isinstance(payload, dict) else None
+    except requests.RequestException:
+        return None
+
+
+def activate_scan(scan_id: str) -> dict | None:
+    """Manually select one immutable historical snapshot as active."""
+    try:
+        response = requests.put(
+            f"{API_BASE_URL}/aws/scans/{scan_id}/activate",
+            headers=get_auth_headers(),
+            timeout=REQUEST_TIMEOUT,
+        )
+        if response.status_code != 200:
+            st.error(get_error_detail(response, "Unable to activate saved scan."))
+            return None
+        payload = response.json()
+        return payload if isinstance(payload, dict) else None
+    except requests.RequestException as exc:
+        st.error(f"Unable to activate saved scan: {exc}")
+        return None
+
+
+def refresh_aws_scan() -> dict | None:
+    """Explicitly create a fresh immutable discovery snapshot."""
+    try:
+        with st.spinner(
+            "Refreshing AWS discovery and creating a new saved snapshot..."
+        ):
+            response = requests.post(
+                f"{API_BASE_URL}/aws/scan/refresh",
+                headers=get_auth_headers(),
+                timeout=FULL_SCAN_TIMEOUT,
+            )
+        if response.status_code != 200:
+            st.error(get_error_detail(response, "Unable to refresh AWS discovery."))
+            return None
+        payload = response.json()
+        return payload if isinstance(payload, dict) else None
+    except requests.RequestException as exc:
+        st.error(f"AWS discovery refresh failed: {exc}")
+        return None
+
+
 # ============================================================
 # PHASE 2 PERSISTED CHAT API
 # ============================================================
@@ -897,14 +958,16 @@ def get_persisted_scan(
 def create_chat(
     scan_id: str,
     title: str = "New AWS Chat",
+    context: dict | None = None,
 ) -> dict | None:
-    """Create a persisted chat linked to a discovery scan."""
+    """Create a persisted chat linked to one immutable discovery snapshot."""
     try:
         response = requests.post(
             f"{API_BASE_URL}/chats",
             json={
                 "scan_id": scan_id,
                 "title": title,
+                "context": context or {},
             },
             headers=get_auth_headers(),
             timeout=REQUEST_TIMEOUT,
@@ -978,7 +1041,7 @@ def query_chat(
     chat_id: int,
     question: str,
 ) -> dict | None:
-    """Ask a live AWS question inside a persisted chat session."""
+    """Ask from the saved scan; backend escalates to live AWS only when needed."""
     request_started = perf_counter()
 
     try:
@@ -1059,6 +1122,258 @@ def _open_chat_session(
     st.session_state["active_chat"] = chat
 
 
+def _open_context_chat(
+    *,
+    context: dict,
+    title: str,
+) -> None:
+    """Create a chat anchored to the current scan and structured UI selection."""
+    scan_data = st.session_state.get("aws_scan") or {}
+    scan_id = scan_data.get("scan_id")
+    if not scan_id:
+        st.error("A completed saved discovery scan is required before opening chat.")
+        return
+
+    structured_context = {
+        **context,
+        "scan_id": str(scan_id),
+    }
+    created = create_chat(
+        scan_id=str(scan_id),
+        title=title[:200],
+        context=structured_context,
+    )
+    if not created:
+        return
+
+    st.session_state["active_chat_id"] = created.get("id")
+    st.session_state["active_chat"] = created
+    st.session_state["active_page"] = "chat"
+    st.rerun()
+
+
+def _service_context_from_classification(item: dict) -> dict:
+    billing_services = item.get("billing_services") or []
+    regions = item.get("regions") or []
+    display_name = (
+        (billing_services[0] if billing_services else None)
+        or item.get("discovered_service")
+        or item.get("key")
+        or "AWS Service"
+    )
+    return {
+        "context_type": "SERVICE",
+        "label": str(display_name),
+        "service": item.get("discovered_service"),
+        "service_key": item.get("key"),
+        "billing_service": billing_services[0] if billing_services else None,
+        "category": item.get("category"),
+        "financial_status": item.get("financial_status"),
+        "billing_amount": item.get("billing_amount"),
+        "currency": item.get("currency"),
+        "regions": regions,
+    }
+
+
+def _render_discovered_service_chat_buttons(
+    items: list[dict] | None,
+) -> None:
+    clean = [item for item in (items or []) if isinstance(item, dict) and item.get("service")]
+    if not clean:
+        return
+    st.caption("Select a discovered service to open contextual chat.")
+    columns = st.columns(3)
+    for index, item in enumerate(clean):
+        namespace = str(item.get("service"))
+        with columns[index % len(columns)]:
+            if st.button(
+                f"💬 {namespace}",
+                key=f"discovered_service_chat_{index}_{namespace}",
+                use_container_width=True,
+            ):
+                _open_context_chat(
+                    context={
+                        "context_type": "SERVICE",
+                        "label": namespace,
+                        "service": namespace,
+                        "resource_count": item.get("resource_count"),
+                        "regions": item.get("regions") or [],
+                        "category": "DISCOVERED_RESOURCE_BACKED",
+                    },
+                    title=f"{namespace} · Saved Scan",
+                )
+
+
+def _render_service_chat_buttons(
+    items: list[dict] | None,
+    *,
+    key_prefix: str,
+) -> None:
+    clean_items = [item for item in (items or []) if isinstance(item, dict)]
+    if not clean_items:
+        return
+
+    st.caption("Select a service to open a chat anchored to this saved scan.")
+    columns = st.columns(3)
+    for index, item in enumerate(clean_items):
+        context = _service_context_from_classification(item)
+        label = str(context.get("label") or "AWS Service")
+        with columns[index % len(columns)]:
+            if st.button(
+                f"💬 {label}",
+                key=f"{key_prefix}_{index}_{item.get('key') or label}",
+                use_container_width=True,
+            ):
+                _open_context_chat(
+                    context=context,
+                    title=f"{label} · Saved Scan",
+                )
+
+
+def _render_region_chat_buttons(
+    items: list[dict] | None,
+    *,
+    key_prefix: str,
+) -> None:
+    clean_items = [item for item in (items or []) if isinstance(item, dict) and item.get("region")]
+    if not clean_items:
+        return
+    columns = st.columns(4)
+    for index, item in enumerate(clean_items):
+        region = str(item.get("region"))
+        with columns[index % len(columns)]:
+            if st.button(
+                f"💬 {region}",
+                key=f"{key_prefix}_{index}_{region}",
+                use_container_width=True,
+            ):
+                _open_context_chat(
+                    context={
+                        "context_type": "REGION",
+                        "label": region,
+                        "region": region,
+                        "category": item.get("category"),
+                        "billing_amount": item.get("billing_amount"),
+                        "resource_count": item.get("resource_count"),
+                    },
+                    title=f"{region} · Saved Scan",
+                )
+
+
+def _render_billing_service_chat_selector(
+    service_costs: list[dict] | None,
+) -> None:
+    clean = [item for item in (service_costs or []) if isinstance(item, dict) and item.get("billing_service")]
+    if not clean:
+        return
+    options = [""] + [str(item.get("billing_service")) for item in clean]
+    selector_version = int(st.session_state.get("billing_service_selector_version", 0))
+    selected = st.selectbox(
+        "Open billing service in Chat",
+        options=options,
+        index=0,
+        key=f"billing_service_context_selector_{selector_version}",
+        placeholder="Choose a Cost Explorer service group...",
+    )
+    if not selected:
+        return
+    item = next((row for row in clean if str(row.get("billing_service")) == selected), None)
+    if not item:
+        return
+    st.session_state["billing_service_selector_version"] = selector_version + 1
+    _open_context_chat(
+        context={
+            "context_type": "BILLING_SERVICE",
+            "label": selected,
+            "billing_service": selected,
+            "billing_amount": item.get("amount"),
+            "currency": item.get("unit"),
+        },
+        title=f"{selected} · Billing Snapshot",
+    )
+
+
+def _render_zone_chat_selector(zones: list[dict] | None) -> None:
+    clean = [item for item in (zones or []) if isinstance(item, dict) and item.get("zone_name")]
+    if not clean:
+        return
+    options = [""] + [str(item.get("zone_name")) for item in clean]
+    version = int(st.session_state.get("zone_selector_version", 0))
+    selected = st.selectbox(
+        "Open Availability Zone in Chat",
+        options=options,
+        index=0,
+        key=f"zone_context_selector_{version}",
+        placeholder="Choose an Availability Zone...",
+    )
+    if not selected:
+        return
+    item = next((row for row in clean if str(row.get("zone_name")) == selected), None)
+    if not item:
+        return
+    st.session_state["zone_selector_version"] = version + 1
+    _open_context_chat(
+        context={
+            "context_type": "AVAILABILITY_ZONE",
+            "label": selected,
+            "availability_zone": selected,
+            "zone_id": item.get("zone_id"),
+            "region": item.get("region_name"),
+            "state": item.get("state"),
+            "zone_type": item.get("zone_type"),
+        },
+        title=f"{selected} · Saved Scan",
+    )
+
+
+def _render_resource_chat_selector(resources: list[dict] | None) -> None:
+    clean = [item for item in (resources or []) if isinstance(item, dict)]
+    if not clean:
+        return
+
+    options: list[str] = [""]
+    mapping: dict[str, dict] = {}
+    for index, item in enumerate(clean):
+        resource_id = item.get("resource_id") or item.get("arn") or f"resource-{index + 1}"
+        service = item.get("service") or "aws"
+        region = item.get("region") or "global/unknown"
+        label = f"{resource_id} · {service} · {region}"
+        # Make duplicate display values unique without changing evidence.
+        if label in mapping:
+            label = f"{label} · #{index + 1}"
+        options.append(label)
+        mapping[label] = item
+
+    selector_version = int(st.session_state.get("resource_selector_version", 0))
+    selected = st.selectbox(
+        "Open discovered resource in Chat",
+        options=options,
+        index=0,
+        key=f"resource_context_selector_{selector_version}",
+        placeholder="Choose a discovered AWS resource...",
+    )
+    if not selected:
+        return
+
+    item = mapping[selected]
+    resource_id = item.get("resource_id") or item.get("arn") or "AWS Resource"
+    # Reset before changing page so returning to Discovery does not reopen it.
+    st.session_state["resource_selector_version"] = selector_version + 1
+    _open_context_chat(
+        context={
+            "context_type": "RESOURCE",
+            "label": str(resource_id),
+            "resource_id": item.get("resource_id"),
+            "arn": item.get("arn"),
+            "service": item.get("service"),
+            "resource_type": item.get("resource_type"),
+            "region": item.get("region"),
+            "owning_account_id": item.get("owning_account_id"),
+        },
+        title=f"{resource_id} · Saved Scan",
+    )
+
+
 # ============================================================
 # BACKEND AWS SESSION
 # ============================================================
@@ -1117,6 +1432,7 @@ def clear_aws_session() -> None:
         "aws_chat_history",
         "active_chat_id",
         "active_chat",
+        "active_snapshot_bootstrapped",
     ):
         st.session_state.pop(
             key,
@@ -1256,6 +1572,16 @@ def render_region_results(
             use_container_width=True,
             hide_index=True,
         )
+        _render_region_chat_buttons(
+            [
+                {
+                    "region": item.get("region_name"),
+                    "category": "ENABLED_REGION",
+                }
+                for item in enabled_region_rows
+            ],
+            key_prefix="enabled_region_chat",
+        )
     else:
         st.info(
             "No enabled AWS Regions were returned."
@@ -1312,6 +1638,7 @@ def render_zone_results(
             use_container_width=True,
             hide_index=True,
         )
+        _render_zone_chat_selector(zones)
     else:
         st.info(
             "No Availability Zones were returned."
@@ -1400,15 +1727,37 @@ def render_resource_inventory(
     # --------------------------------------------------------
 
     st.subheader(
-        "Detected AWS Services"
+        "Resource-backed AWS Services"
     )
 
     if detected_services:
-        st.dataframe(
-            detected_services,
-            use_container_width=True,
-            hide_index=True,
-        )
+        service_rows = []
+        for item in detected_services:
+            if not isinstance(item, dict):
+                continue
+            namespace = str(item.get("service") or "").strip()
+            if not namespace:
+                continue
+            service_rows.append(
+                {
+                    "service_namespace": namespace,
+                    "resources": item.get("resource_count", 0),
+                    "regions": ", ".join(
+                        map(str, item.get("regions") or [])
+                    ) or "-",
+                    "evidence": "Resource Explorer resource",
+                }
+            )
+
+        if service_rows:
+            st.dataframe(
+                service_rows,
+                use_container_width=True,
+                hide_index=True,
+            )
+            _render_discovered_service_chat_buttons(detected_services)
+        else:
+            st.info("No resource-backed AWS services were detected.")
     else:
         st.info(
             "No AWS services with discoverable resources "
@@ -1473,6 +1822,8 @@ def render_resource_inventory(
             hide_index=True,
         )
 
+        _render_resource_chat_selector(resources)
+
         with st.expander(
             "View Complete Resource Data"
         ):
@@ -1486,6 +1837,450 @@ def render_resource_inventory(
         )
 
 
+def _format_currency_amount(
+    amount: object,
+    currency: str = "USD",
+) -> str:
+    """Format backend billing values safely for UI display."""
+    try:
+        numeric_amount = float(amount or 0)
+    except (TypeError, ValueError):
+        numeric_amount = 0.0
+
+    normalized_currency = str(currency or "USD").strip() or "USD"
+    return f"{normalized_currency} {numeric_amount:,.2f}"
+
+
+def _classified_service_rows(
+    services: list[dict] | None,
+) -> list[dict]:
+    """Flatten classified service objects into readable table rows."""
+    rows: list[dict] = []
+
+    for item in services or []:
+        if not isinstance(item, dict):
+            continue
+
+        billing_services = item.get("billing_services") or []
+        regions = item.get("regions") or []
+        related = item.get("related_primary_services") or []
+
+        # Prefer the official Cost Explorer SERVICE label for user-facing
+        # display. The discovered namespace is still retained separately as
+        # technical evidence. This prevents SDK/API identifiers from becoming
+        # the main service name shown to the auditor.
+        service_name = (
+            (billing_services[0] if billing_services else None)
+            or item.get("discovered_service")
+            or "-"
+        )
+
+        confidence = item.get("billing_match_confidence")
+        if isinstance(confidence, (int, float)):
+            confidence_display = round(float(confidence), 3)
+        else:
+            confidence_display = None
+
+        rows.append(
+            {
+                "service": service_name,
+                "resource_namespace": item.get("discovered_service") or "-",
+                "category": item.get("category", "-"),
+                "financial_status": item.get("financial_status", "-"),
+                "paid": bool(item.get("paid")),
+                "cost": _format_currency_amount(
+                    item.get("billing_amount"),
+                    str(item.get("currency") or "USD"),
+                ),
+                "resources": item.get("resource_count", 0),
+                "regions": ", ".join(map(str, regions)) if regions else "-",
+                "billing_services": (
+                    ", ".join(map(str, billing_services))
+                    if billing_services
+                    else "-"
+                ),
+                "related_primary_services": (
+                    ", ".join(map(str, related))
+                    if related
+                    else "-"
+                ),
+                "billing_match": item.get("billing_match_method") or "-",
+                "match_confidence": confidence_display,
+            }
+        )
+
+    return rows
+
+
+def _classified_region_rows(
+    regions: list[dict] | None,
+) -> list[dict]:
+    """Flatten classified Region objects into readable table rows."""
+    rows: list[dict] = []
+
+    for item in regions or []:
+        if not isinstance(item, dict):
+            continue
+
+        rows.append(
+            {
+                "region": item.get("region", "-"),
+                "category": item.get("category", "-"),
+                "cost": _format_currency_amount(
+                    item.get("billing_amount"),
+                    str(item.get("currency") or "USD"),
+                ),
+                "resources": item.get("resource_count", 0),
+                "enabled": bool(item.get("enabled")),
+            }
+        )
+
+    return rows
+
+
+def render_billing_results(
+    billing_data: dict | None,
+) -> None:
+    """Render dynamic Cost Explorer evidence returned by the backend."""
+    if not billing_data:
+        return
+
+    st.divider()
+    st.subheader("Billing Evidence")
+
+    available = billing_data.get("available") is True
+    currency = str(billing_data.get("currency") or "USD")
+    service_costs = billing_data.get("service_costs") or []
+    region_costs = billing_data.get("region_costs") or []
+    components = billing_data.get("components") or []
+
+    billing_cols = st.columns(4)
+
+    with billing_cols[0]:
+        st.metric("Billing Access", "Available" if available else "Unavailable")
+
+    with billing_cols[1]:
+        st.metric(
+            "Current Period Cost",
+            _format_currency_amount(
+                billing_data.get("total_cost"),
+                currency,
+            ),
+        )
+
+    with billing_cols[2]:
+        st.metric("Billed Services", len(service_costs))
+
+    with billing_cols[3]:
+        st.metric("Billing Regions", len(region_costs))
+
+    period_start = billing_data.get("period_start")
+    period_end = billing_data.get("period_end_exclusive")
+    metric = billing_data.get("metric") or "UnblendedCost"
+
+    if period_start or period_end:
+        st.caption(
+            f"Billing window: {period_start or '-'} to {period_end or '-'} "
+            f"(end exclusive) · Metric: {metric}"
+        )
+
+    if not available:
+        st.warning(
+            "Billing data is unavailable for this scan. Infrastructure discovery "
+            "can still be used, but paid/primary classification may be incomplete."
+        )
+
+    service_tab, region_tab, component_tab = st.tabs(
+        ["Service Cost", "Region Cost", "Billing Components"]
+    )
+
+    with service_tab:
+        if service_costs:
+            rows = []
+            for item in service_costs:
+                if not isinstance(item, dict):
+                    continue
+                try:
+                    amount = float(item.get("amount") or 0)
+                except (TypeError, ValueError):
+                    amount = 0.0
+
+                if amount > 1e-9:
+                    cost_status = "POSITIVE_COST"
+                elif amount < -1e-9:
+                    cost_status = "CREDIT_OR_ADJUSTMENT"
+                else:
+                    cost_status = "ZERO_COST"
+
+                rows.append(
+                    {
+                        "billing_service": item.get("billing_service", "-"),
+                        "amount": amount,
+                        "unit": item.get("unit", currency),
+                        "cost_status": cost_status,
+                    }
+                )
+            st.dataframe(rows, use_container_width=True, hide_index=True)
+            _render_billing_service_chat_selector(service_costs)
+        else:
+            st.info("No service-level billing groups were returned.")
+
+    with region_tab:
+        if region_costs:
+            rows = [
+                {
+                    "region": item.get("region", "-"),
+                    "amount": item.get("amount", 0),
+                    "unit": item.get("unit", currency),
+                }
+                for item in region_costs
+                if isinstance(item, dict)
+            ]
+            st.dataframe(rows, use_container_width=True, hide_index=True)
+        else:
+            st.info("No Region-level billing groups were returned.")
+
+    with component_tab:
+        if components:
+            rows = [
+                {
+                    "billing_service": item.get("billing_service", "-"),
+                    "usage_type": item.get("usage_type", "-"),
+                    "amount": item.get("amount", 0),
+                    "unit": item.get("unit", currency),
+                }
+                for item in components
+                if isinstance(item, dict)
+            ]
+            st.dataframe(rows, use_container_width=True, hide_index=True)
+        else:
+            st.info("No SERVICE + USAGE_TYPE billing components were returned.")
+
+    with st.expander("View Complete Billing Data", expanded=False):
+        st.json(billing_data)
+
+
+def render_classification_results(
+    classification_data: dict | None,
+) -> None:
+    """Render billing-aware service and Region classification."""
+    if not classification_data:
+        return
+
+    st.divider()
+    st.subheader("Infrastructure Classification")
+
+    primary = classification_data.get("primary_paid_services") or []
+    zero_cost = classification_data.get("zero_cost_services") or []
+    supporting = classification_data.get("supporting_services") or []
+    unbilled = classification_data.get("discovered_unbilled_services") or []
+    billing_only = classification_data.get("billing_only_services") or []
+    non_positive = classification_data.get("non_positive_billing_services") or []
+
+    # New scans keep billing-only Cost Explorer groups separate in the backend.
+    # The fallback below also handles older persisted scans created before that
+    # field existed. No service names are hard-coded.
+    primary_resource_backed = [
+        item
+        for item in primary
+        if isinstance(item, dict) and item.get("discovered_service")
+    ]
+    legacy_billing_only = [
+        item
+        for item in primary
+        if isinstance(item, dict) and not item.get("discovered_service")
+    ]
+    billing_only_primary = [
+        *[item for item in billing_only if isinstance(item, dict)],
+        *legacy_billing_only,
+    ]
+
+    paid_regions = classification_data.get("paid_regions") or []
+    used_unbilled_regions = (
+        classification_data.get("used_unbilled_regions") or []
+    )
+    enabled_unused_regions = (
+        classification_data.get("enabled_unused_regions") or []
+    )
+    billed_only_regions = classification_data.get("billed_only_regions") or []
+    relationships = classification_data.get("relationships") or []
+
+    summary_cols = st.columns(5)
+    with summary_cols[0]:
+        st.metric("Primary Paid AWS Services", len(primary_resource_backed))
+    with summary_cols[1]:
+        st.metric("Zero-Cost Candidates", len(zero_cost))
+    with summary_cols[2]:
+        st.metric("Supporting Services", len(supporting))
+    with summary_cols[3]:
+        st.metric("Discovered Unbilled", len(unbilled))
+    with summary_cols[4]:
+        st.metric("Paid Regions", len(paid_regions))
+
+    st.caption(
+        "Primary/paid AWS services require discovered resource evidence plus "
+        "positive billing cost. A Zero-Cost / Free-Tier Candidate has a matched "
+        "Cost Explorer SERVICE record whose net cost is zero; this does not by "
+        "itself prove AWS Free Tier or trial eligibility. Supporting classification "
+        "is derived from resource relationships. No fixed service allow/deny list "
+        "is used."
+    )
+
+    service_tab, region_tab, relationship_tab = st.tabs(
+        ["Service Classification", "Region Classification", "Relationships"]
+    )
+
+    with service_tab:
+        st.markdown("#### Primary / Paid AWS Services")
+        rows = _classified_service_rows(primary_resource_backed)
+        if rows:
+            st.dataframe(rows, use_container_width=True, hide_index=True)
+            _render_service_chat_buttons(
+                primary_resource_backed,
+                key_prefix="primary_service_chat",
+            )
+        else:
+            st.info(
+                "No positively billed services were mapped to discovered "
+                "AWS infrastructure for this scan."
+            )
+
+        if billing_only_primary:
+            with st.expander(
+                "Billing entries not mapped to discovered infrastructure "
+                f"({len(billing_only_primary)})",
+                expanded=False,
+            ):
+                st.caption(
+                    "These values came from Cost Explorer SERVICE groups but "
+                    "were not matched to a resource-backed service namespace, "
+                    "so they are not shown as discovered AWS infrastructure."
+                )
+                st.dataframe(
+                    _classified_service_rows(billing_only_primary),
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+        st.markdown("#### Zero-Cost / Free-Tier Candidates")
+        zero_rows = _classified_service_rows(zero_cost)
+        if zero_rows:
+            st.caption(
+                "These services have discovered resource evidence and a matched "
+                "Cost Explorer SERVICE record with net cost 0. They may be Free "
+                "Tier/trial, permanently free usage, discounted usage, credits, "
+                "or another zero-cost case; the scan does not claim the exact "
+                "commercial reason without stronger billing evidence."
+            )
+            st.dataframe(zero_rows, use_container_width=True, hide_index=True)
+            _render_service_chat_buttons(
+                zero_cost,
+                key_prefix="zero_cost_service_chat",
+            )
+        else:
+            st.info("No resource-backed zero-cost billing services were classified.")
+
+        st.markdown("#### Supporting / Related AWS Services")
+        rows = _classified_service_rows(supporting)
+        if rows:
+            st.dataframe(rows, use_container_width=True, hide_index=True)
+            _render_service_chat_buttons(
+                supporting,
+                key_prefix="supporting_service_chat",
+            )
+        else:
+            st.info("No supporting service relationships were classified.")
+
+        with st.expander(
+            f"Discovered but Unbilled Services ({len(unbilled)})",
+            expanded=False,
+        ):
+            rows = _classified_service_rows(unbilled)
+            if rows:
+                st.dataframe(rows, use_container_width=True, hide_index=True)
+                _render_service_chat_buttons(
+                    unbilled,
+                    key_prefix="unbilled_service_chat",
+                )
+            else:
+                st.info("No discovered unbilled services were classified.")
+
+        if non_positive:
+            with st.expander(
+                f"Non-Positive Billing Services ({len(non_positive)})",
+                expanded=False,
+            ):
+                st.dataframe(
+                    _classified_service_rows(non_positive),
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+    with region_tab:
+        region_groups = [
+            ("Paid / Primary Regions", paid_regions),
+            ("Used but Unbilled Regions", used_unbilled_regions),
+            ("Enabled but Unused Regions", enabled_unused_regions),
+            ("Billing-Only Regions", billed_only_regions),
+        ]
+
+        for title, items in region_groups:
+            st.markdown(f"#### {title}")
+            rows = _classified_region_rows(items)
+            if rows:
+                st.dataframe(rows, use_container_width=True, hide_index=True)
+                _render_region_chat_buttons(
+                    items,
+                    key_prefix=f"region_chat_{title.lower().replace(' ', '_').replace('/', '_')}",
+                )
+            else:
+                st.caption("No Regions in this category.")
+
+    with relationship_tab:
+        if relationships:
+            relationship_rows = []
+            for item in relationships:
+                if not isinstance(item, dict):
+                    continue
+                relationship_rows.append(
+                    {
+                        "source_service": item.get("source_service") or "-",
+                        "source_resource": (
+                            item.get("source_resource_id")
+                            or item.get("source_arn")
+                            or "-"
+                        ),
+                        "target_service": item.get("target_service") or "-",
+                        "target_resource": (
+                            item.get("target_resource_id")
+                            or item.get("target_arn")
+                            or "-"
+                        ),
+                        "evidence": item.get("evidence") or "-",
+                    }
+                )
+
+            st.dataframe(
+                relationship_rows,
+                use_container_width=True,
+                hide_index=True,
+            )
+        else:
+            st.info("No resource-to-resource relationships were inferred.")
+
+    classification_warnings = classification_data.get("warnings") or []
+    if classification_warnings:
+        with st.expander(
+            f"Classification Warnings ({len(classification_warnings)})",
+            expanded=False,
+        ):
+            for warning in classification_warnings:
+                st.warning(str(warning))
+
+    with st.expander("View Complete Classification Data", expanded=False):
+        st.json(classification_data)
+
+
 # Deep service scan renderers removed. Detailed configuration is queried
 # on demand through the NLP -> generic read-only AWS MCP query flow.
 
@@ -1496,6 +2291,8 @@ def render_scan_status(
     region_data: dict | None,
     zone_data: dict | None,
     resource_data: dict | None,
+    billing_data: dict | None,
+    classification_data: dict | None,
 ) -> None:
     """
     Render the current scan pipeline status.
@@ -1559,6 +2356,26 @@ def render_scan_status(
             "status": (
                 "Completed"
                 if resource_data
+                else "Pending"
+            ),
+        },
+        {
+            "stage": "Billing Discovery",
+            "status": (
+                (
+                    "Completed"
+                    if billing_data.get("available") is True
+                    else "Unavailable / Partial"
+                )
+                if billing_data
+                else "Pending"
+            ),
+        },
+        {
+            "stage": "Billing-Aware Classification",
+            "status": (
+                "Completed"
+                if classification_data
                 else "Pending"
             ),
         },
@@ -1694,6 +2511,15 @@ def render_app_sidebar(
                     else "secondary"
                 ),
             ):
+                # Home/Discovery always return to the persisted active snapshot.
+                # Historical chats remain tied to their own scan while open.
+                if page_key in {"home", "discovery"}:
+                    active_snapshot = get_active_scan()
+                    if active_snapshot:
+                        st.session_state["aws_scan"] = active_snapshot
+                        st.session_state["aws_connection"] = active_snapshot.get(
+                            "account", {}
+                        )
                 st.session_state[
                     "active_page"
                 ] = page_key
@@ -1917,6 +2743,13 @@ def render_template1_overview(
 
     st.write("")
 
+    completed_at = scan_data.get("completed_at") or scan_data.get("started_at")
+    active_label = "Active saved snapshot" if scan_data.get("is_active") else "Saved historical snapshot"
+    st.caption(
+        f"{active_label} · Scan ID: {str(scan_data.get('scan_id') or '-')[:16]}"
+        + (f" · Scanned: {completed_at}" if completed_at else "")
+    )
+
     metric_cols = st.columns(4)
 
     with metric_cols[0]:
@@ -1941,6 +2774,40 @@ def render_template1_overview(
         st.metric(
             "▤ Resources",
             summary.get("discovered_resources", 0),
+        )
+
+    billing_metric_cols = st.columns(5)
+
+    with billing_metric_cols[0]:
+        st.metric(
+            "💳 Billing",
+            "Available"
+            if summary.get("billing_available")
+            else "Unavailable",
+        )
+
+    with billing_metric_cols[1]:
+        st.metric(
+            "Paid Services",
+            summary.get("primary_paid_services", 0),
+        )
+
+    with billing_metric_cols[2]:
+        st.metric(
+            "Zero-Cost",
+            summary.get("zero_cost_services", 0),
+        )
+
+    with billing_metric_cols[3]:
+        st.metric(
+            "Supporting Services",
+            summary.get("supporting_services", 0),
+        )
+
+    with billing_metric_cols[4]:
+        st.metric(
+            "Paid Regions",
+            summary.get("paid_regions", 0),
         )
 
 
@@ -2058,6 +2925,10 @@ def _render_query_evidence(result: dict) -> None:
     status = _query_status_label(result)
 
     st.caption(f"Query status: {status}")
+
+    source = result.get("source")
+    if source:
+        st.caption(f"Evidence source: {source}")
 
     intent = result.get("intent")
     if intent:
@@ -2213,9 +3084,9 @@ def render_aws_ai_chat(
             f"""
             <div class="chat-heading">🤖 {chat.get("title") or "AWS AI Assistant"}</div>
             <div class="chat-subtitle">
-                Ask follow-up questions naturally. Recent conversation context is used
-                only to understand references; AWS infrastructure answers still come
-                from live read-only AWS MCP queries.
+                Ask naturally about the saved discovery snapshot. Questions that truly
+                require current AWS state can automatically use live read-only AWS MCP
+                when a live AWS session is connected.
             </div>
             """,
             unsafe_allow_html=True,
@@ -2223,20 +3094,26 @@ def render_aws_ai_chat(
 
     with session_col:
         if backend_session_active:
-            st.success("AWS session active")
+            st.success("Live AWS connected")
         else:
-            st.warning("AWS session expired")
+            st.info("Live AWS not connected")
 
     st.caption(
-        f"Chat #{chat.get('id')} · Active scan: {str(scan_id)[:12]}… · "
-        "Messages are saved in SQLite."
+        f"Chat #{chat.get('id')} · Snapshot: {str(scan_id)[:12]}… · "
+        "Messages and selected context are saved in SQLite."
     )
+
+    chat_context = chat.get("context") or {}
+    if chat_context:
+        context_type = chat_context.get("context_type") or "CONTEXT"
+        context_label = chat_context.get("label") or chat_context.get("resource_id") or chat_context.get("region") or "Selected item"
+        st.info(f"Selected {context_type}: {context_label}")
 
     if not backend_session_active:
         st.info(
-            "Chat history is still available, but live AWS questions require an "
-            "active AWS credential session. Reconnect the AWS account and run a "
-            "fresh scan to continue live querying."
+            "Saved-snapshot questions remain available. Live AWS credentials are kept only "
+            "in backend memory and may be cleared by a server restart/reload. Reconnect "
+            "only for current/live AWS queries or a manual refresh."
         )
 
     messages = chat.get("messages") or []
@@ -2256,6 +3133,13 @@ def render_aws_ai_chat(
                 st.markdown(content)
 
                 if role == "assistant":
+                    evidence = message.get("evidence") or {}
+                    source = evidence.get("source") if isinstance(evidence, dict) else None
+                    if source == "PERSISTED_DISCOVERY_SNAPSHOT":
+                        st.caption("Source: saved immutable discovery snapshot")
+                    elif source == "LIVE_AWS_MCP":
+                        st.caption("Source: live read-only AWS MCP query")
+
                     response_time_ms = message.get("response_time_ms")
                     if response_time_ms is not None:
                         try:
@@ -2265,8 +3149,8 @@ def render_aws_ai_chat(
                             pass
 
     question = st.chat_input(
-        "Ask anything about this AWS account...",
-        disabled=not backend_session_active,
+        "Ask about this saved AWS snapshot or request current/live AWS state...",
+        disabled=False,
         key=f"chat_input_{chat.get('id')}",
     )
 
@@ -2283,7 +3167,7 @@ def render_aws_ai_chat(
 
     with st.chat_message("assistant"):
         with st.spinner(
-            "Querying the live AWS account through the official AWS MCP Server..."
+            "Resolving the question from the saved snapshot or live AWS evidence..."
         ):
             query_result = query_chat(
                 chat_id=int(chat.get("id")),
@@ -2299,6 +3183,11 @@ def render_aws_ai_chat(
             st.warning(answer)
 
         if isinstance(query_result, dict):
+            source = query_result.get("source")
+            if source == "PERSISTED_DISCOVERY_SNAPSHOT":
+                st.caption("Source: saved immutable discovery snapshot")
+            elif source == "LIVE_AWS_MCP":
+                st.caption("Source: live read-only AWS MCP query")
             _render_query_timing(query_result)
 
             with st.expander(
@@ -2313,6 +3202,65 @@ def render_aws_ai_chat(
         st.session_state["active_chat"] = refreshed
 
     st.rerun()
+
+
+def render_reconnect_aws_form(expected_account_id: str | None = None) -> None:
+    """Reconnect transient AWS credentials without replacing the saved snapshot."""
+    with st.expander("Reconnect AWS for live queries / manual refresh", expanded=False):
+        st.caption(
+            "Saved discovery data remains available without credentials. Reconnect only "
+            "when you need live AWS data or want to manually create a fresh snapshot."
+        )
+        with st.form("reconnect_aws_credentials_form"):
+            access_key_id = st.text_input(
+                "AWS Access Key ID",
+                placeholder="AKIA...",
+                key="reconnect_access_key_id",
+            )
+            secret_access_key = st.text_input(
+                "AWS Secret Access Key",
+                type="password",
+                key="reconnect_secret_access_key",
+            )
+            session_token = st.text_input(
+                "AWS Session Token (optional)",
+                type="password",
+                key="reconnect_session_token",
+            )
+            submitted = st.form_submit_button(
+                "Reconnect AWS Session",
+                type="primary",
+                use_container_width=True,
+            )
+
+        if not submitted:
+            return
+        if not access_key_id or not secret_access_key:
+            st.error("Access Key ID and Secret Access Key are required.")
+            return
+
+        payload = {
+            "access_key_id": access_key_id.strip(),
+            "secret_access_key": secret_access_key,
+            "session_token": session_token.strip() if session_token.strip() else None,
+        }
+        verified = verify_aws_account(payload)
+        if not verified:
+            return
+
+        verified_account_id = str(verified.get("account_id") or "")
+        if expected_account_id and verified_account_id != str(expected_account_id):
+            disconnect_aws_backend_session()
+            st.error(
+                "These credentials belong to a different AWS account. The saved "
+                "snapshot was not changed."
+            )
+            return
+
+        st.session_state["aws_connection"] = verified
+        st.session_state["aws_credentials"] = payload
+        st.success("AWS live session reconnected. Saved snapshot remains unchanged.")
+        st.rerun()
 
 
 # ============================================================
@@ -2425,8 +3373,6 @@ def render_home_page(
                 )
 
                 if verification_data:
-                    clear_scan_results()
-
                     st.session_state[
                         "aws_connection"
                     ] = verification_data
@@ -2434,6 +3380,16 @@ def render_home_page(
                     st.session_state[
                         "aws_credentials"
                     ] = credentials_payload
+
+                    # Reuse the previously saved active snapshot for this account.
+                    # Verification never triggers a discovery refresh automatically.
+                    saved_scan = get_active_scan(
+                        str(verification_data.get("account_id") or "")
+                    )
+                    if saved_scan:
+                        st.session_state["aws_scan"] = saved_scan
+                    else:
+                        clear_scan_results()
 
                     st.success(
                         "AWS account verified successfully."
@@ -2456,10 +3412,13 @@ def render_home_page(
         [2.2, 1, 1]
     )
 
+    live_session_active = get_aws_backend_session_status()
+
     with top_cols[0]:
-        st.success(
-            f"AWS account {account_id} is connected."
-        )
+        if live_session_active:
+            st.success(f"AWS account {account_id} · live session connected.")
+        else:
+            st.info(f"AWS account {account_id} · saved snapshot loaded.")
 
     with top_cols[1]:
         st.metric(
@@ -2472,11 +3431,8 @@ def render_home_page(
 
     with top_cols[2]:
         st.metric(
-            "Status",
-            aws_connection.get(
-                "connection_status",
-                "VERIFIED",
-            ),
+            "Runtime",
+            "Live" if live_session_active else "Snapshot",
         )
 
     with st.expander(
@@ -2502,12 +3458,14 @@ def render_home_page(
         )
 
         if st.button(
-            "Disconnect AWS Account",
+            "Disconnect Live AWS Session",
             use_container_width=True,
             key="home_disconnect_aws",
         ):
             disconnect_aws_backend_session()
-            clear_aws_session()
+            st.session_state.pop("aws_credentials", None)
+            # Keep the persisted discovery snapshot loaded. Disconnecting only
+            # removes live AWS credentials; saved evidence remains available.
             st.session_state[
                 "active_page"
             ] = "home"
@@ -2522,8 +3480,8 @@ def render_home_page(
 
         st.info(
             "The AWS account is verified. "
-            "Run Discovery to establish Regions, Availability Zones, "
-            "services, and lightweight resource context."
+            "Run Discovery to establish Regions, Availability Zones, resources, "
+            "billing evidence, and dynamic service/Region classification."
         )
 
         if st.button(
@@ -2593,7 +3551,7 @@ def render_discovery_page(
         """
         <div class="overview-title">AWS Discovery</div>
         <div class="overview-subtitle">
-            Establish the lightweight AWS account context used by live NLP queries.
+            Discover AWS infrastructure, billing evidence, and dynamically classified services/Regions for live NLP queries.
         </div>
         """,
         unsafe_allow_html=True,
@@ -2612,35 +3570,30 @@ def render_discovery_page(
         st.success(
             f"Connected to AWS account {aws_connection.get('account_id', '-')}"
         )
+        backend_session_active = get_aws_backend_session_status()
 
-        run_scan_clicked = st.button(
-            "Start AWS Discovery Scan",
-            type="primary",
-            use_container_width=True,
-            key="start_aws_discovery_scan",
-        )
-
-        if run_scan_clicked:
-            credentials = st.session_state.get("aws_credentials")
-
-            if not credentials:
-                st.error(
-                    "AWS credentials are no longer available in this session. "
-                    "Please verify the account again."
-                )
-            else:
-                new_scan_data = run_aws_scan(credentials)
-
+        if backend_session_active:
+            run_scan_clicked = st.button(
+                "Create First Discovery Snapshot",
+                type="primary",
+                use_container_width=True,
+                key="start_aws_discovery_scan",
+            )
+            if run_scan_clicked:
+                new_scan_data = refresh_aws_scan()
                 if new_scan_data:
                     st.session_state["aws_scan"] = new_scan_data
-
-                    if new_scan_data.get("status") == "COMPLETED":
-                        st.success("AWS discovery completed successfully.")
-                    else:
-                        st.error("AWS discovery did not complete successfully.")
-
+                    st.session_state["active_chat_id"] = None
+                    st.session_state["active_chat"] = None
                     st.rerun()
-
+        else:
+            st.info(
+                "No saved snapshot exists for this account and the live AWS session "
+                "is not active. Reconnect to create the first snapshot."
+            )
+            render_reconnect_aws_form(
+                expected_account_id=str(aws_connection.get("account_id") or "")
+            )
         return
 
     render_template1_overview(
@@ -2648,13 +3601,60 @@ def render_discovery_page(
         scan_data=scan_data,
     )
 
+    backend_session_active = get_aws_backend_session_status()
+    snapshot_time = scan_data.get("completed_at") or scan_data.get("started_at") or "-"
+    st.info(
+        f"This page is using saved scan {str(scan_data.get('scan_id') or '-')[:16]} "
+        f"from {snapshot_time}. It will remain unchanged until you manually refresh "
+        "or activate another historical scan."
+    )
+
+    refresh_col, session_col = st.columns([1.4, 2.6])
+    with refresh_col:
+        refresh_clicked = st.button(
+            "Refresh Discovery Snapshot",
+            type="primary",
+            use_container_width=True,
+            key="manual_refresh_discovery_snapshot",
+            disabled=not backend_session_active,
+        )
+        if refresh_clicked:
+            new_scan_data = refresh_aws_scan()
+            if new_scan_data:
+                st.session_state["aws_scan"] = new_scan_data
+                st.session_state["aws_connection"] = new_scan_data.get("account", aws_connection)
+                # Existing chats stay tied to their original immutable scan. New chat
+                # selection starts from the newly active snapshot.
+                st.session_state["active_chat_id"] = None
+                st.session_state["active_chat"] = None
+                st.rerun()
+
+    with session_col:
+        if backend_session_active:
+            st.success("Live AWS connected · manual refresh/live queries available")
+        else:
+            st.info("Live AWS not connected · saved snapshot/chat still available")
+
+    if not backend_session_active:
+        render_reconnect_aws_form(
+            expected_account_id=str((scan_data.get("account") or {}).get("account_id") or aws_connection.get("account_id") or "")
+        )
+
     render_scan_status(
         aws_connection=aws_connection,
         scan_data=scan_data,
         region_data=scan_data.get("regions"),
         zone_data=scan_data.get("zones"),
         resource_data=scan_data.get("resources"),
+        billing_data=scan_data.get("billing"),
+        classification_data=scan_data.get("classification"),
     )
+
+    # Billing-aware results are shown before raw inventory so the auditor
+    # immediately sees what is paid/primary and how Regions are classified.
+    render_billing_results(scan_data.get("billing"))
+    render_classification_results(scan_data.get("classification"))
+
     render_region_results(scan_data.get("regions"))
     render_zone_results(scan_data.get("zones"))
     render_resource_inventory(scan_data.get("resources"))
@@ -2690,8 +3690,8 @@ def render_settings_page(
     st.write(f"**Signed in user:** {user.get('username', '-')}")
     st.write(f"**Email:** {user.get('email', '-')}")
     st.write(
-        "**AWS backend session:** "
-        + ("Active" if get_aws_backend_session_status() else "Not active")
+        "**Live AWS credentials:** "
+        + ("Connected" if get_aws_backend_session_status() else "Not connected")
     )
 
     if aws_connection:
@@ -2721,6 +3721,16 @@ if "active_page" not in st.session_state:
 # ============================================================
 # APPLICATION SHELL
 # ============================================================
+
+# On login/page reload, restore the persisted active snapshot from SQLite.
+# This is a read-only DB restore; it never performs AWS discovery automatically.
+if not st.session_state.get("active_snapshot_bootstrapped"):
+    if not st.session_state.get("aws_scan"):
+        restored_active_scan = get_active_scan()
+        if restored_active_scan:
+            st.session_state["aws_scan"] = restored_active_scan
+            st.session_state["aws_connection"] = restored_active_scan.get("account", {})
+    st.session_state["active_snapshot_bootstrapped"] = True
 
 aws_connection = st.session_state.get("aws_connection")
 scan_data = st.session_state.get("aws_scan")
@@ -2753,14 +3763,15 @@ with st.sidebar:
                     if not scan_id:
                         continue
 
-                    label = f"{account_id} · {str(scan_id)[:8]}"
+                    active_marker = " ✓ active" if item.get("is_active") else ""
+                    label = f"{account_id} · {str(scan_id)[:8]}{active_marker}"
 
                     if st.button(
                         label,
                         use_container_width=True,
                         key=f"restore_scan_{scan_id}",
                     ):
-                        restored = get_persisted_scan(scan_id)
+                        restored = activate_scan(str(scan_id))
 
                         if restored:
                             st.session_state["aws_scan"] = restored
@@ -2768,6 +3779,8 @@ with st.sidebar:
                                 "account",
                                 {},
                             )
+                            st.session_state["active_chat_id"] = None
+                            st.session_state["active_chat"] = None
                             st.session_state["active_page"] = "discovery"
                             st.rerun()
 
