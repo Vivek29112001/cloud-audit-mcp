@@ -34,10 +34,12 @@ for bucket in bucket_response.get("Buckets", []):
         "mfa_delete": None,
         "public_access_block": None,
         "encryption": {
-            "enabled": False,
+            "evidence_status": "NOT_CHECKED",
+            "enabled": None,
             "algorithm": None,
             "kms_key_id": None,
-            "bucket_key_enabled": None
+            "bucket_key_enabled": None,
+            "uses_kms": None
         },
         "policy_public": None,
         "logging_enabled": None,
@@ -237,15 +239,17 @@ for bucket in bucket_response.get("Buckets", []):
                 )
             )
 
+            algorithm = default_encryption.get(
+                "SSEAlgorithm"
+            )
+
             bucket_result[
                 "encryption"
             ] = {
+                "evidence_status": "AVAILABLE",
                 "enabled": True,
 
-                "algorithm":
-                    default_encryption.get(
-                        "SSEAlgorithm"
-                    ),
+                "algorithm": algorithm,
 
                 "kms_key_id":
                     default_encryption.get(
@@ -255,10 +259,26 @@ for bucket in bucket_response.get("Buckets", []):
                 "bucket_key_enabled":
                     first_rule.get(
                         "BucketKeyEnabled"
-                    )
+                    ),
+
+                "uses_kms": algorithm in (
+                    "aws:kms",
+                    "aws:kms:dsse",
+                )
             }
 
     except Exception as exc:
+        # Missing/inaccessible encryption evidence must not be reported as
+        # "encryption disabled". Modern S3 applies baseline server-side
+        # encryption, while this API tells us the bucket's configured default.
+        bucket_result["encryption"] = {
+            "evidence_status": "UNAVAILABLE",
+            "enabled": None,
+            "algorithm": None,
+            "kms_key_id": None,
+            "bucket_key_enabled": None,
+            "uses_kms": None
+        }
         bucket_result["warnings"].append(
             "GetBucketEncryption failed: "
             + str(exc)

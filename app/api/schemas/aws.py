@@ -50,6 +50,27 @@ class AWSVerifyResponse(BaseModel):
     connection_status: str
 
 
+
+
+class AWSAssumeRoleVerifyRequest(BaseModel):
+    role_arn: str = Field(min_length=20, max_length=512)
+    external_id: str | None = Field(default=None, max_length=256)
+    default_region: str = Field(default="us-east-1", min_length=1, max_length=64)
+
+
+class AWSConnectionVerifyResponse(BaseModel):
+    workspace_id: int
+    provider: str
+    account_id: str
+    arn: str
+    user_id: str
+    connection_status: str
+    aws_connection_id: int
+    auth_type: str
+    auto_connect: bool
+    default_region: str
+
+
 # ============================================================
 # REGION DISCOVERY
 # ============================================================

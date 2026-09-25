@@ -31,6 +31,589 @@ st.set_page_config(
 # UI ONLY: backend/API/session logic remains unchanged.
 # ============================================================
 
+# st.markdown(
+#     """
+#     <style>
+#     #MainMenu {visibility: hidden;}
+#     footer {visibility: hidden;}
+#     header[data-testid="stHeader"] {background: transparent;}
+
+#     .stApp {
+#         background: #f5f7fb;
+#     }
+
+#     .block-container {
+#         max-width: 1450px;
+#         padding-top: 1.4rem;
+#         padding-bottom: 2rem;
+#     }
+
+#     section[data-testid="stSidebar"] {
+#         background:
+#             linear-gradient(180deg, #10253f 0%, #0c1d33 55%, #09182a 100%);
+#         border-right: 1px solid rgba(255,255,255,0.07);
+#     }
+
+#     section[data-testid="stSidebar"] * {
+#         color: #f7faff;
+#     }
+
+#     section[data-testid="stSidebar"] .stButton > button {
+#         width: 100%;
+#         text-align: left;
+#         justify-content: flex-start;
+#         border: 1px solid transparent;
+#         background: transparent;
+#         color: #e8eef7;
+#         border-radius: 10px;
+#         padding: 0.7rem 0.85rem;
+#         font-weight: 600;
+#     }
+
+#     section[data-testid="stSidebar"] .stButton > button:hover {
+#         background: rgba(80, 145, 255, 0.17);
+#         border-color: rgba(120, 169, 255, 0.22);
+#     }
+
+#     .overview-title {
+#         font-size: 2rem;
+#         font-weight: 800;
+#         color: #0d1b32;
+#         letter-spacing: -0.03em;
+#         line-height: 1.15;
+#         margin: 0;
+#     }
+
+#     .overview-subtitle {
+#         color: #64748b;
+#         margin-top: 0.35rem;
+#         font-size: 0.98rem;
+#     }
+
+#     .ready-pill {
+#         display: inline-block;
+#         padding: 0.55rem 0.9rem;
+#         border-radius: 10px;
+#         background: #dff8ee;
+#         color: #078b63;
+#         font-weight: 700;
+#         font-size: 0.9rem;
+#         border: 1px solid #c8f0e2;
+#     }
+
+#     .status-pill {
+#         display: inline-block;
+#         padding: 0.45rem 0.8rem;
+#         border-radius: 999px;
+#         background: #edf4ff;
+#         color: #2563eb;
+#         font-weight: 700;
+#         font-size: 0.84rem;
+#     }
+
+#     div[data-testid="stMetric"] {
+#         background: #ffffff;
+#         border: 1px solid #dfe7f2;
+#         border-radius: 14px;
+#         padding: 1.1rem 1rem;
+#         box-shadow: 0 3px 12px rgba(25, 53, 88, 0.04);
+#         min-height: 132px;
+#         display: flex;
+#         flex-direction: column;
+#         justify-content: center;
+#         text-align: center;
+#     }
+
+#     div[data-testid="stMetric"] label {
+#         justify-content: center;
+#         color: #51627a !important;
+#         font-weight: 700 !important;
+#     }
+
+#     div[data-testid="stMetricValue"] {
+#         color: #0e1c35;
+#         font-weight: 800;
+#     }
+
+#     .stButton > button {
+#         border-radius: 10px;
+#         min-height: 42px;
+#         font-weight: 700;
+#     }
+
+#     div[data-testid="stForm"] {
+#         background: #ffffff;
+#         border: 1px solid #dfe7f2;
+#         border-radius: 16px;
+#         padding: 1.15rem;
+#         box-shadow: 0 4px 18px rgba(24,49,83,0.045);
+#     }
+
+#     .chat-heading {
+#         font-size: 1.15rem;
+#         font-weight: 800;
+#         color: #10213b;
+#         margin-bottom: 0.15rem;
+#     }
+
+#     .chat-subtitle {
+#         color: #718096;
+#         font-size: 0.92rem;
+#         margin-bottom: 0.8rem;
+#     }
+
+#     div[data-testid="stChatMessage"] {
+#         background: #ffffff;
+#         border: 1px solid #e2e8f0;
+#         border-radius: 14px;
+#         padding: 0.65rem 0.85rem;
+#         margin-bottom: 0.65rem;
+#     }
+
+#     div[data-testid="stChatInput"] {
+#         background: #ffffff;
+#         border-top: 1px solid #e4eaf2;
+#         padding-top: 0.6rem;
+#     }
+
+#     hr {
+#         border-color: #e7edf4;
+#     }
+
+#     /* ========================================================
+#        CLEAN CHATGPT-STYLE SIDEBAR
+#        ======================================================== */
+
+#     section[data-testid="stSidebar"] {
+#         min-width: 300px !important;
+#         max-width: 300px !important;
+#         background: #0c1d33 !important;
+#         border-right: 1px solid rgba(255,255,255,0.07);
+#     }
+
+#     section[data-testid="stSidebar"] > div:first-child {
+#         padding-top: 0.5rem;
+#     }
+
+#     section[data-testid="stSidebar"] .block-container {
+#         padding-top: 0.6rem !important;
+#         padding-left: 0.8rem !important;
+#         padding-right: 0.8rem !important;
+#     }
+
+#     section[data-testid="stSidebar"] * {
+#         box-sizing: border-box;
+#     }
+
+#     section[data-testid="stSidebar"] .stMarkdown {
+#         margin: 0 !important;
+#         padding: 0 !important;
+#     }
+
+#     section[data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] {
+#         margin: 0 !important;
+#         padding: 0 !important;
+#     }
+
+#     section[data-testid="stSidebar"] pre,
+#     section[data-testid="stSidebar"] code {
+#         background: transparent !important;
+#         border: none !important;
+#         padding: 0 !important;
+#         margin: 0 !important;
+#     }
+
+#     section[data-testid="stSidebar"] .stButton {
+#         margin: 0.08rem 0 !important;
+#     }
+
+#     section[data-testid="stSidebar"] .stButton > button {
+#         width: 100%;
+#         min-height: 38px;
+#         padding: 0.45rem 0.68rem;
+#         justify-content: flex-start;
+#         text-align: left;
+#         border-radius: 9px;
+#         border: 1px solid transparent;
+#         background: transparent;
+#         box-shadow: none;
+#         font-size: 0.83rem;
+#         font-weight: 600;
+#         color: #dbe7f5 !important;
+#         transition:
+#             background 0.14s ease,
+#             border-color 0.14s ease;
+#     }
+
+#     section[data-testid="stSidebar"] .stButton > button:hover {
+#         background: rgba(255,255,255,0.075);
+#         border-color: rgba(255,255,255,0.06);
+#         transform: none;
+#     }
+
+#     section[data-testid="stSidebar"] button[kind="primary"] {
+#         background: rgba(88,135,255,0.16) !important;
+#         border-color: rgba(110,151,255,0.20) !important;
+#         color: #ffffff !important;
+#     }
+
+#     section[data-testid="stSidebar"] button:disabled {
+#         opacity: 0.42;
+#     }
+
+#     .cc-sidebar-brand {
+#         padding: 0.35rem 0.15rem 0.55rem 0.15rem;
+#     }
+
+#     .cc-sidebar-brand-row {
+#         display: flex;
+#         align-items: center;
+#         gap: 0.65rem;
+#     }
+
+#     .cc-sidebar-logo {
+#         width: 34px;
+#         height: 34px;
+#         flex: 0 0 34px;
+#         display: flex;
+#         align-items: center;
+#         justify-content: center;
+#         border-radius: 10px;
+#         background: rgba(255,255,255,0.09);
+#         color: #ffffff;
+#         font-size: 1rem;
+#     }
+
+#     .cc-sidebar-title {
+#         color: #ffffff;
+#         font-size: 1rem;
+#         line-height: 1.2;
+#         font-weight: 800;
+#         letter-spacing: -0.01em;
+#     }
+
+#     .cc-sidebar-subtitle {
+#         margin-top: 0.13rem;
+#         color: #879ab2;
+#         font-size: 0.69rem;
+#         line-height: 1.2;
+#     }
+
+#     .cc-sidebar-user {
+#         display: flex;
+#         align-items: center;
+#         gap: 0.58rem;
+#         margin: 0.25rem 0 0.75rem 0;
+#         padding: 0.58rem 0.62rem;
+#         border-radius: 10px;
+#         background: rgba(255,255,255,0.045);
+#         border: 1px solid rgba(255,255,255,0.055);
+#     }
+
+#     .cc-user-avatar {
+#         width: 30px;
+#         height: 30px;
+#         flex: 0 0 30px;
+#         display: flex;
+#         align-items: center;
+#         justify-content: center;
+#         border-radius: 8px;
+#         background: #203b5b;
+#         color: #ffffff;
+#         font-size: 0.77rem;
+#         font-weight: 800;
+#     }
+
+#     .cc-user-copy {
+#         min-width: 0;
+#         flex: 1;
+#     }
+
+#     .cc-user-name {
+#         overflow: hidden;
+#         color: #f8fbff;
+#         font-size: 0.78rem;
+#         font-weight: 700;
+#         line-height: 1.15;
+#         text-overflow: ellipsis;
+#         white-space: nowrap;
+#     }
+
+#     .cc-user-email {
+#         overflow: hidden;
+#         margin-top: 0.13rem;
+#         color: #8093aa;
+#         font-size: 0.65rem;
+#         line-height: 1.15;
+#         text-overflow: ellipsis;
+#         white-space: nowrap;
+#     }
+
+#     .cc-sidebar-label {
+#         margin: 0.3rem 0.18rem 0.28rem 0.18rem;
+#         color: #6f829a;
+#         font-size: 0.64rem;
+#         font-weight: 800;
+#         letter-spacing: 0.075em;
+#         text-transform: uppercase;
+#     }
+
+#     .cc-chat-label {
+#         margin-top: 0.65rem;
+#     }
+
+#     .cc-sidebar-divider {
+#         height: 1px;
+#         margin: 0.75rem 0 0.65rem 0;
+#         background: rgba(255,255,255,0.065);
+#     }
+
+#     .cc-empty-chats {
+#         padding: 0.45rem 0.5rem 0.6rem 0.5rem;
+#         color: #8a9cb1;
+#         font-size: 0.72rem;
+#         line-height: 1.35;
+#     }
+
+#     .cc-empty-chats span {
+#         color: #64778f;
+#         font-size: 0.66rem;
+#     }
+
+#     .cc-footer-divider {
+#         margin-top: 0.8rem;
+#     }
+
+#     .cc-account-card {
+#         margin: 0.25rem 0 0.5rem 0;
+#         padding: 0.62rem 0.66rem;
+#         border-radius: 10px;
+#         background: rgba(255,255,255,0.04);
+#         border: 1px solid rgba(255,255,255,0.055);
+#     }
+
+#     .cc-account-top {
+#         display: flex;
+#         align-items: center;
+#         justify-content: space-between;
+#         color: #6f829a;
+#         font-size: 0.61rem;
+#         font-weight: 800;
+#         letter-spacing: 0.065em;
+#     }
+
+#     .cc-account-dot {
+#         color: #54d6a1;
+#         font-size: 0.62rem;
+#     }
+
+#     .cc-account-dot-off {
+#         color: #e8b64c;
+#     }
+
+#     .cc-account-id {
+#         overflow: hidden;
+#         margin-top: 0.28rem;
+#         color: #edf5ff;
+#         font-size: 0.75rem;
+#         font-weight: 700;
+#         text-overflow: ellipsis;
+#         white-space: nowrap;
+#     }
+
+#     .cc-account-meta {
+#         overflow: hidden;
+#         margin-top: 0.17rem;
+#         color: #788ba2;
+#         font-size: 0.64rem;
+#         text-overflow: ellipsis;
+#         white-space: nowrap;
+#     }
+
+#     /* ========================================================
+#        CLIENT WORKSPACE CONTROLS
+#        Keep Streamlit's white application form styling out of
+#        the dark sidebar and make all workspace controls readable.
+#        ======================================================== */
+
+#     .cc-workspace-help {
+#         margin: -0.02rem 0.18rem 0.42rem 0.18rem;
+#         color: #8295ac;
+#         font-size: 0.66rem;
+#         line-height: 1.35;
+#     }
+
+#     /* Workspace select */
+#     section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+#         min-height: 40px !important;
+#         background: #ffffff !important;
+#         border: 1px solid #d7dee8 !important;
+#         border-radius: 9px !important;
+#         box-shadow: none !important;
+#     }
+
+#     section[data-testid="stSidebar"] div[data-baseweb="select"] > div:hover {
+#         border-color: #9fb5d0 !important;
+#         background: #ffffff !important;
+#     }
+
+#     /* Selected workspace text: black + bold. */
+#     section[data-testid="stSidebar"] div[data-baseweb="select"] span,
+#     section[data-testid="stSidebar"] div[data-baseweb="select"] input,
+#     section[data-testid="stSidebar"] div[data-baseweb="select"] [data-testid="stSelectboxVirtualDropdown"] {
+#         color: #111827 !important;
+#         -webkit-text-fill-color: #111827 !important;
+#         font-size: 0.78rem !important;
+#         font-weight: 700 !important;
+#     }
+
+#     section[data-testid="stSidebar"] div[data-baseweb="select"] svg {
+#         color: #475569 !important;
+#         fill: #475569 !important;
+#     }
+
+#     section[data-testid="stSidebar"] div[data-baseweb="select"] input::placeholder {
+#         color: #64748b !important;
+#         -webkit-text-fill-color: #64748b !important;
+#         font-weight: 600 !important;
+#         opacity: 1 !important;
+#     }
+
+#     /* Workspace expander */
+#     section[data-testid="stSidebar"] div[data-testid="stExpander"] {
+#         margin-top: 0.42rem !important;
+#         margin-bottom: 0.72rem !important;
+#     }
+
+#     section[data-testid="stSidebar"] div[data-testid="stExpander"] details {
+#         overflow: hidden;
+#         background: rgba(255,255,255,0.025) !important;
+#         border: 1px solid rgba(255,255,255,0.075) !important;
+#         border-radius: 10px !important;
+#         box-shadow: none !important;
+#     }
+
+#     section[data-testid="stSidebar"] div[data-testid="stExpander"] summary {
+#         min-height: 40px !important;
+#         padding: 0.48rem 0.68rem !important;
+#         background: rgba(255,255,255,0.035) !important;
+#         border-radius: 9px !important;
+#     }
+
+#     section[data-testid="stSidebar"] div[data-testid="stExpander"] summary:hover {
+#         background: rgba(255,255,255,0.07) !important;
+#     }
+
+#     section[data-testid="stSidebar"] div[data-testid="stExpander"] summary p,
+#     section[data-testid="stSidebar"] div[data-testid="stExpander"] summary span,
+#     section[data-testid="stSidebar"] div[data-testid="stExpander"] summary svg {
+#         color: #dce8f6 !important;
+#         fill: #9fb2c9 !important;
+#         font-size: 0.76rem !important;
+#         font-weight: 650 !important;
+#     }
+
+#     /* Do not inherit the main-page white form card inside sidebar. */
+#     section[data-testid="stSidebar"] div[data-testid="stExpander"] div[data-testid="stForm"] {
+#         margin: 0 !important;
+#         padding: 0.65rem 0.68rem 0.72rem 0.68rem !important;
+#         background: transparent !important;
+#         border: 0 !important;
+#         border-top: 1px solid rgba(255,255,255,0.06) !important;
+#         border-radius: 0 !important;
+#         box-shadow: none !important;
+#     }
+
+#     section[data-testid="stSidebar"] div[data-testid="stExpander"] label p {
+#         color: #9eb0c6 !important;
+#         font-size: 0.67rem !important;
+#         font-weight: 650 !important;
+#     }
+
+#     .cc-workspace-danger-title {
+#         margin-top: 0.75rem;
+#         padding-top: 0.72rem;
+#         border-top: 1px solid rgba(248,113,113,0.22);
+#         color: #fca5a5;
+#         font-size: 0.72rem;
+#         font-weight: 800;
+#         text-transform: uppercase;
+#         letter-spacing: 0.04em;
+#     }
+
+#     /* Workspace-name input */
+#     section[data-testid="stSidebar"] .stTextInput input {
+#         min-height: 39px !important;
+#         background: #ffffff !important;
+#         border: 1px solid #d7dee8 !important;
+#         border-radius: 8px !important;
+#         color: #111827 !important;
+#         -webkit-text-fill-color: #111827 !important;
+#         caret-color: #111827 !important;
+#         box-shadow: none !important;
+#         font-size: 0.77rem !important;
+#         font-weight: 700 !important;
+#     }
+
+#     section[data-testid="stSidebar"] .stTextInput input:focus {
+#         border-color: rgba(100, 149, 255, 0.75) !important;
+#         box-shadow: 0 0 0 1px rgba(100, 149, 255, 0.30) !important;
+#     }
+
+#     section[data-testid="stSidebar"] .stTextInput input::placeholder {
+#         color: #64748b !important;
+#         -webkit-text-fill-color: #64748b !important;
+#         font-weight: 600 !important;
+#         opacity: 1 !important;
+#     }
+
+#     /* Create workspace submit button */
+#     section[data-testid="stSidebar"] div[data-testid="stForm"] button {
+#         width: 100% !important;
+#         min-height: 38px !important;
+#         margin-top: 0.25rem !important;
+#         justify-content: center !important;
+#         text-align: center !important;
+#         background: #2563eb !important;
+#         border: 1px solid #3b82f6 !important;
+#         border-radius: 8px !important;
+#         color: #ffffff !important;
+#         font-size: 0.76rem !important;
+#         font-weight: 700 !important;
+#         box-shadow: none !important;
+#     }
+
+#     section[data-testid="stSidebar"] div[data-testid="stForm"] button:hover {
+#         background: #2f6ff2 !important;
+#         border-color: #60a5fa !important;
+#     }
+
+#     /* Streamlit may mount the select menu in a portal outside the sidebar. */
+#     div[role="listbox"] {
+#         background: #ffffff !important;
+#         border: 1px solid #d8e1ec !important;
+#         border-radius: 9px !important;
+#         box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14) !important;
+#     }
+
+#     div[role="listbox"] [role="option"] {
+#         color: #14233a !important;
+#         background: #ffffff !important;
+#         font-size: 0.79rem !important;
+#     }
+
+#     div[role="listbox"] [role="option"]:hover,
+#     div[role="listbox"] [aria-selected="true"] {
+#         color: #0f1f36 !important;
+#         background: #edf4ff !important;
+#     }
+
+#     </style>
+#     """,
+#     unsafe_allow_html=True,
+# )
+
+
 st.markdown(
     """
     <style>
@@ -39,7 +622,7 @@ st.markdown(
     header[data-testid="stHeader"] {background: transparent;}
 
     .stApp {
-        background: #f5f7fb;
+        background: #eef3f8;
     }
 
     .block-container {
@@ -112,8 +695,8 @@ st.markdown(
     }
 
     div[data-testid="stMetric"] {
-        background: #ffffff;
-        border: 1px solid #dfe7f2;
+        background: #fdfefe;
+        border: 1px solid #d9e3ef;
         border-radius: 14px;
         padding: 1.1rem 1rem;
         box-shadow: 0 3px 12px rgba(25, 53, 88, 0.04);
@@ -126,12 +709,12 @@ st.markdown(
 
     div[data-testid="stMetric"] label {
         justify-content: center;
-        color: #51627a !important;
+        color: #53657c !important;
         font-weight: 700 !important;
     }
 
     div[data-testid="stMetricValue"] {
-        color: #0e1c35;
+        color: #17233a;
         font-weight: 800;
     }
 
@@ -142,8 +725,8 @@ st.markdown(
     }
 
     div[data-testid="stForm"] {
-        background: #ffffff;
-        border: 1px solid #dfe7f2;
+        background: #fdfefe;
+        border: 1px solid #d9e3ef;
         border-radius: 16px;
         padding: 1.15rem;
         box-shadow: 0 4px 18px rgba(24,49,83,0.045);
@@ -163,16 +746,16 @@ st.markdown(
     }
 
     div[data-testid="stChatMessage"] {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
+        background: #f9fbfe;
+        border: 1px solid #dbe5f0;
         border-radius: 14px;
         padding: 0.65rem 0.85rem;
         margin-bottom: 0.65rem;
     }
 
     div[data-testid="stChatInput"] {
-        background: #ffffff;
-        border-top: 1px solid #e4eaf2;
+        background: #f7faff;
+        border-top: 1px solid #dce6f1;
         padding-top: 0.6rem;
     }
 
@@ -187,7 +770,7 @@ st.markdown(
     section[data-testid="stSidebar"] {
         min-width: 300px !important;
         max-width: 300px !important;
-        background: #0c1d33 !important;
+        background: #0b1f33 !important;
         border-right: 1px solid rgba(255,255,255,0.07);
     }
 
@@ -306,7 +889,7 @@ st.markdown(
         margin: 0.25rem 0 0.75rem 0;
         padding: 0.58rem 0.62rem;
         border-radius: 10px;
-        background: rgba(255,255,255,0.045);
+        background: #132b45;
         border: 1px solid rgba(255,255,255,0.055);
     }
 
@@ -318,7 +901,7 @@ st.markdown(
         align-items: center;
         justify-content: center;
         border-radius: 8px;
-        background: #203b5b;
+        background: #2a4d73;
         color: #ffffff;
         font-size: 0.77rem;
         font-weight: 800;
@@ -388,7 +971,7 @@ st.markdown(
         margin: 0.25rem 0 0.5rem 0;
         padding: 0.62rem 0.66rem;
         border-radius: 10px;
-        background: rgba(255,255,255,0.04);
+        background: #122943;
         border: 1px solid rgba(255,255,255,0.055);
     }
 
@@ -430,10 +1013,378 @@ st.markdown(
         white-space: nowrap;
     }
 
+    /* ========================================================
+       CLIENT WORKSPACE CONTROLS
+       Keep Streamlit's white application form styling out of
+       the dark sidebar and make all workspace controls readable.
+       ======================================================== */
+
+    .cc-workspace-help {
+        margin: -0.02rem 0.18rem 0.42rem 0.18rem;
+        color: #8295ac;
+        font-size: 0.66rem;
+        line-height: 1.35;
+    }
+
+    /* Workspace select */
+    section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+        min-height: 40px !important;
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 9px !important;
+        box-shadow: none !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-baseweb="select"] > div:hover {
+        border-color: #94a3b8 !important;
+        background: #ffffff !important;
+    }
+
+    /* Selected workspace text: black + bold. */
+    section[data-testid="stSidebar"] div[data-baseweb="select"] span,
+    section[data-testid="stSidebar"] div[data-baseweb="select"] input,
+    section[data-testid="stSidebar"] div[data-baseweb="select"] [data-testid="stSelectboxVirtualDropdown"] {
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-baseweb="select"] svg {
+        color: #111827 !important;
+        fill: #111827 !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-baseweb="select"] input::placeholder {
+        color: #475569 !important;
+        -webkit-text-fill-color: #475569 !important;
+        font-weight: 600 !important;
+        opacity: 1 !important;
+    }
+
+    /* Workspace expander */
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] {
+        margin-top: 0.42rem !important;
+        margin-bottom: 0.72rem !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] details {
+        overflow: hidden;
+        background: rgba(255,255,255,0.025) !important;
+        border: 1px solid rgba(255,255,255,0.075) !important;
+        border-radius: 10px !important;
+        box-shadow: none !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] summary {
+        min-height: 40px !important;
+        padding: 0.48rem 0.68rem !important;
+        background: rgba(255,255,255,0.035) !important;
+        border-radius: 9px !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] summary:hover {
+        background: rgba(255,255,255,0.07) !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] summary p,
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] summary span,
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] summary svg {
+        color: #dce8f6 !important;
+        fill: #9fb2c9 !important;
+        font-size: 0.76rem !important;
+        font-weight: 650 !important;
+    }
+
+    /* Do not inherit the main-page white form card inside sidebar. */
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] div[data-testid="stForm"] {
+        margin: 0 !important;
+        padding: 0.65rem 0.68rem 0.72rem 0.68rem !important;
+        background: transparent !important;
+        border: 0 !important;
+        border-top: 1px solid rgba(255,255,255,0.06) !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] label p {
+        color: #9eb0c6 !important;
+        font-size: 0.67rem !important;
+        font-weight: 650 !important;
+    }
+
+    .cc-workspace-danger-title {
+        margin-top: 0.75rem;
+        padding-top: 0.72rem;
+        border-top: 1px solid rgba(248,113,113,0.22);
+        color: #fca5a5;
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    /* Workspace-name input */
+    section[data-testid="stSidebar"] .stTextInput input {
+        min-height: 39px !important;
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+        caret-color: #111827 !important;
+        box-shadow: none !important;
+        font-size: 0.77rem !important;
+        font-weight: 700 !important;
+    }
+
+    section[data-testid="stSidebar"] .stTextInput input:focus {
+        border-color: rgba(100, 149, 255, 0.75) !important;
+        box-shadow: 0 0 0 1px rgba(100, 149, 255, 0.30) !important;
+    }
+
+    section[data-testid="stSidebar"] .stTextInput input::placeholder {
+        color: #475569 !important;
+        -webkit-text-fill-color: #475569 !important;
+        font-weight: 600 !important;
+        opacity: 1 !important;
+    }
+
+    /* Create workspace submit button */
+    section[data-testid="stSidebar"] div[data-testid="stForm"] button {
+        width: 100% !important;
+        min-height: 38px !important;
+        margin-top: 0.25rem !important;
+        justify-content: center !important;
+        text-align: center !important;
+        background: #2563eb !important;
+        border: 1px solid #3b82f6 !important;
+        border-radius: 8px !important;
+        color: #ffffff !important;
+        font-size: 0.76rem !important;
+        font-weight: 700 !important;
+        box-shadow: none !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stForm"] button:hover {
+        background: #2f6ff2 !important;
+        border-color: #60a5fa !important;
+    }
+
+
+    /* ========================================================
+       GLOBAL DROPDOWN CONTRAST FIX
+       Keep dropdown fields light with dark text everywhere.
+       ======================================================== */
+    div[data-baseweb="select"] > div {
+        background: #ffffff !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] input,
+    div[data-baseweb="select"] div {
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+    }
+
+    div[data-baseweb="select"] svg {
+        color: #111827 !important;
+        fill: #111827 !important;
+    }
+
+    div[data-baseweb="select"] input::placeholder {
+        color: #475569 !important;
+        -webkit-text-fill-color: #475569 !important;
+        opacity: 1 !important;
+    }
+
+    /* Streamlit may mount the select menu in a portal outside the sidebar. */
+    div[role="listbox"] {
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 9px !important;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14) !important;
+    }
+
+    div[role="listbox"] [role="option"] {
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+        background: #ffffff !important;
+        font-size: 0.79rem !important;
+    }
+
+    div[role="listbox"] [role="option"]:hover,
+    div[role="listbox"] [aria-selected="true"] {
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+        background: #edf4ff !important;
+    }
+
+    
+
+    /* ========================================================
+       FINAL SELECTBOX TEXT FIX
+       Streamlit/BaseWeb can apply white text/opacity from the
+       dark sidebar. Keep the field white and its contents dark.
+       Keep this block LAST so it wins the cascade.
+       ======================================================== */
+    section[data-testid="stSidebar"] div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        background-color: #ffffff !important;
+        border-color: #cbd5e1 !important;
+        opacity: 1 !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stSelectbox"] div[data-baseweb="select"] > div *,
+    section[data-testid="stSidebar"] div[data-testid="stSelectbox"] div[data-baseweb="select"] span,
+    section[data-testid="stSidebar"] div[data-testid="stSelectbox"] div[data-baseweb="select"] input,
+    section[data-testid="stSidebar"] div[data-testid="stSelectbox"] div[data-baseweb="select"] div {
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+        opacity: 1 !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stSelectbox"] div[data-baseweb="select"] svg {
+        color: #111827 !important;
+        fill: #111827 !important;
+        opacity: 1 !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stSelectbox"] div[data-baseweb="select"] input::placeholder {
+        color: #475569 !important;
+        -webkit-text-fill-color: #475569 !important;
+        opacity: 1 !important;
+    }
+
+    /* If the select is disabled, Streamlit/BaseWeb dims the whole control. */
+    section[data-testid="stSidebar"] div[data-testid="stSelectbox"] [aria-disabled="true"],
+    section[data-testid="stSidebar"] div[data-testid="stSelectbox"] [data-baseweb="select"] [aria-disabled="true"] {
+        opacity: 1 !important;
+    }
+
+    /* Dropdown menu is usually rendered in a portal outside the sidebar. */
+    div[role="listbox"],
+    div[data-baseweb="popover"] div[role="listbox"] {
+        background: #ffffff !important;
+    }
+
+    div[role="listbox"] [role="option"],
+    div[data-baseweb="popover"] [role="option"],
+    div[role="listbox"] [role="option"] * {
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+        opacity: 1 !important;
+    }
+
+    div[role="listbox"] [role="option"]:hover,
+    div[role="listbox"] [aria-selected="true"] {
+        background: #eaf2ff !important;
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+    }
+
+    /* Keep searchable workspace text black in every BaseWeb state. */
+    section[data-testid="stSidebar"] div[data-testid="stSelectbox"]
+        div[data-baseweb="select"] input,
+    section[data-testid="stSidebar"] div[data-testid="stSelectbox"]
+        div[data-baseweb="select"] [class*="singleValue"],
+    section[data-testid="stSidebar"] div[data-testid="stSelectbox"]
+        div[data-baseweb="select"] [class*="Input"],
+    section[data-testid="stSidebar"] div[data-testid="stSelectbox"]
+        div[data-baseweb="select"] [class*="input"] {
+        color: #dc2626 !important;
+        -webkit-text-fill-color: #dc2626 !important;
+        opacity: 1 !important;
+        font-weight: 800 !important;
+    }
+
+    div[data-baseweb="popover"] div[role="listbox"] [role="option"],
+    div[data-baseweb="popover"] div[role="listbox"] [role="option"] *,
+    div[role="listbox"] [role="option"] p,
+    div[role="listbox"] [role="option"] span {
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+        opacity: 1 !important;
+        font-weight: 600 !important;
+    }
+
+    /* Final non-white UI palette. */
+    .stApp {
+        background: #e3eaf2 !important;
+    }
+
+    section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"] > div,
+    section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+        background: #cbd5df !important;
+    }
+
+    section[data-testid="stSidebar"] *,
+    section[data-testid="stSidebar"] .cc-sidebar-title,
+    section[data-testid="stSidebar"] .cc-sidebar-subtitle,
+    section[data-testid="stSidebar"] .cc-user-name,
+    section[data-testid="stSidebar"] .cc-user-email,
+    section[data-testid="stSidebar"] .cc-sidebar-label,
+    section[data-testid="stSidebar"] .cc-workspace-help,
+    section[data-testid="stSidebar"] .cc-empty-chats,
+    section[data-testid="stSidebar"] .cc-empty-chats span,
+    section[data-testid="stSidebar"] .cc-account-top,
+    section[data-testid="stSidebar"] .cc-account-id,
+    section[data-testid="stSidebar"] .cc-account-meta,
+    section[data-testid="stSidebar"] .stButton > button,
+    section[data-testid="stSidebar"] .stButton > button p,
+    section[data-testid="stSidebar"] .stButton > button span,
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] summary,
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] summary p,
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] summary span,
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] label p {
+        color: #102a43 !important;
+        -webkit-text-fill-color: #102a43 !important;
+        font-weight: 700 !important;
+    }
+
+    div[data-testid="stMetric"],
+    div[data-testid="stForm"],
+    div[data-testid="stChatMessage"],
+    div[data-testid="stChatInput"],
+    section[data-testid="stSidebar"] .cc-sidebar-user,
+    section[data-testid="stSidebar"] .cc-account-card,
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] details {
+        background: #dbe4ed !important;
+        border-color: #aebdcb !important;
+    }
+
+    div[data-baseweb="select"] > div,
+    section[data-testid="stSidebar"] .stTextInput input,
+    div[data-baseweb="popover"] div[role="listbox"],
+    div[role="listbox"],
+    div[role="listbox"] [role="option"] {
+        background: #dbe4ed !important;
+        color: #102a43 !important;
+        -webkit-text-fill-color: #102a43 !important;
+        border-color: #aebdcb !important;
+    }
+
+    div[data-baseweb="select"] *,
+    div[role="listbox"] [role="option"] *,
+    section[data-testid="stSidebar"] .stTextInput input {
+        color: #102a43 !important;
+        -webkit-text-fill-color: #102a43 !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stForm"] button {
+        background: #9fb3c5 !important;
+        border-color: #7f98ae !important;
+        color: #102a43 !important;
+        -webkit-text-fill-color: #102a43 !important;
+    }
+
     </style>
     """,
     unsafe_allow_html=True,
 )
+
+
 
 
 
@@ -463,17 +1414,26 @@ def get_error_detail(
 # PHASE 2 AUTHENTICATION
 # ============================================================
 
-def get_auth_headers() -> dict[str, str]:
+def get_auth_headers(*, include_workspace: bool = True) -> dict[str, str]:
     """
-    Return the current Bearer token header for authenticated backend calls.
+    Return authentication headers. Tenant-scoped APIs also receive the active
+    workspace ID so the backend, not the browser, enforces client isolation.
     """
     token = st.session_state.get("access_token")
     if not token:
         return {}
 
-    return {
+    headers = {
         "Authorization": f"Bearer {token}",
     }
+
+    if include_workspace:
+        workspace = st.session_state.get("active_workspace") or {}
+        workspace_id = workspace.get("id")
+        if workspace_id is not None:
+            headers["X-Workspace-ID"] = str(workspace_id)
+
+    return headers
 
 
 def register_user(
@@ -528,6 +1488,11 @@ def login_user(
 
         st.session_state["access_token"] = payload["access_token"]
         st.session_state["current_user"] = payload["user"]
+        # Never carry a previous browser tenant selection into a new login.
+        st.session_state.pop("active_workspace", None)
+        st.session_state.pop("workspace_list", None)
+        st.session_state.pop("workspace_bootstrap_id", None)
+        clear_workspace_runtime_state()
 
         return True, "Signed in successfully."
 
@@ -545,11 +1510,151 @@ def logout_user() -> None:
     for key in (
         "access_token",
         "current_user",
+        "active_workspace",
+        "workspace_list",
+        "workspace_bootstrap_id",
     ):
         st.session_state.pop(
             key,
             None,
         )
+
+
+# ============================================================
+# CLIENT WORKSPACES
+# ============================================================
+
+def get_workspaces() -> list[dict]:
+    """Return only workspaces the authenticated user is a member of."""
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}/workspaces",
+            headers=get_auth_headers(include_workspace=False),
+            timeout=REQUEST_TIMEOUT,
+        )
+        if response.status_code != 200:
+            return []
+        payload = response.json()
+        return payload if isinstance(payload, list) else []
+    except requests.RequestException:
+        return []
+
+
+def create_workspace(client_name: str) -> dict | None:
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/workspaces",
+            json={"name": client_name.strip()},
+            headers=get_auth_headers(include_workspace=False),
+            timeout=REQUEST_TIMEOUT,
+        )
+        if response.status_code not in (200, 201):
+            st.error(get_error_detail(response, "Unable to create workspace."))
+            return None
+        payload = response.json()
+        return payload if isinstance(payload, dict) else None
+    except requests.RequestException as exc:
+        st.error(f"Unable to create workspace: {exc}")
+        return None
+
+
+def rename_workspace(workspace_id: int, new_name: str) -> dict | None:
+    """Rename an owned workspace and return the updated workspace payload."""
+    try:
+        response = requests.patch(
+            f"{API_BASE_URL}/workspaces/{workspace_id}",
+            json={"name": new_name.strip()},
+            headers=get_auth_headers(include_workspace=False),
+            timeout=REQUEST_TIMEOUT,
+        )
+        if response.status_code != 200:
+            st.error(get_error_detail(response, "Unable to update workspace name."))
+            return None
+        payload = response.json()
+        return payload if isinstance(payload, dict) else None
+    except requests.RequestException as exc:
+        st.error(f"Unable to update workspace: {exc}")
+        return None
+
+
+def delete_workspace(workspace_id: int) -> bool:
+    """Delete an owned workspace and its tenant-scoped AWS/chat data."""
+    try:
+        response = requests.delete(
+            f"{API_BASE_URL}/workspaces/{workspace_id}",
+            headers=get_auth_headers(include_workspace=False),
+            timeout=REQUEST_TIMEOUT,
+        )
+        if response.status_code != 204:
+            st.error(get_error_detail(response, "Unable to delete workspace."))
+            return False
+        return True
+    except requests.RequestException as exc:
+        st.error(f"Unable to delete workspace: {exc}")
+        return False
+
+
+def clear_workspace_runtime_state() -> None:
+    """Clear browser state that belongs to the previously selected client."""
+    for key in (
+        "aws_connection",
+        "aws_credentials",
+        "aws_scan",
+        "aws_chat_history",
+        "active_chat_id",
+        "active_chat",
+        "active_snapshot_bootstrapped",
+        "assume_role_source_identity",
+        "resource_selector_version",
+    ):
+        st.session_state.pop(key, None)
+
+
+def switch_workspace(workspace: dict) -> None:
+    """Switch tenant context without carrying AWS/chat state across clients."""
+    previous = st.session_state.get("active_workspace") or {}
+    if previous.get("id") == workspace.get("id"):
+        st.session_state["active_workspace"] = workspace
+        return
+
+    clear_workspace_runtime_state()
+    st.session_state["active_workspace"] = workspace
+    st.session_state["workspace_bootstrap_id"] = workspace.get("id")
+    st.session_state["active_page"] = "home"
+
+
+def render_workspace_onboarding() -> None:
+    st.markdown(
+        """
+        <div class="overview-title">Create your first client workspace</div>
+        <div class="overview-subtitle">
+            Each workspace is an isolated client boundary for AWS connections,
+            discovery snapshots and AI chat context.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.write("")
+    with st.form("first_workspace_form"):
+        client_name = st.text_input(
+            "Client / Workspace Name",
+            placeholder="Example: XYZ Pvt Ltd",
+        )
+        submitted = st.form_submit_button(
+            "Create Workspace",
+            type="primary",
+            use_container_width=True,
+        )
+    if submitted:
+        if len(client_name.strip()) < 2:
+            st.error("Enter a valid client/workspace name.")
+            return
+        created = create_workspace(client_name)
+        if created:
+            st.session_state["workspace_list"] = [created]
+            switch_workspace(created)
+            st.success("Workspace created.")
+            st.rerun()
 
 
 def render_auth_screen() -> None:
@@ -703,6 +1808,62 @@ def verify_aws_account(
         return None
 
 
+
+
+def verify_assume_role_connection(
+    payload: dict,
+) -> dict | None:
+    """Verify a cross-account IAM Role using automatic STS AssumeRole."""
+    try:
+        with st.spinner("Assuming the client audit role through AWS MCP..."):
+            response = requests.post(
+                f"{API_BASE_URL}/aws/connections/assume-role/verify",
+                json=payload,
+                headers=get_auth_headers(),
+                timeout=FULL_SCAN_TIMEOUT,
+            )
+        if response.status_code != 200:
+            st.error(get_error_detail(response, "Unable to verify AWS IAM Role."))
+            return None
+        body=response.json()
+        return body if isinstance(body,dict) else None
+    except requests.RequestException as exc:
+        st.error(f"Backend connection failed: {exc}")
+        return None
+
+
+def get_assume_role_source_identity() -> dict | None:
+    try:
+        response=requests.get(
+            f"{API_BASE_URL}/aws/connections/assume-role/source-identity",
+            headers=get_auth_headers(),
+            timeout=FULL_SCAN_TIMEOUT,
+        )
+        if response.status_code!=200:
+            st.error(get_error_detail(response,"Unable to verify the DhanushGuard AWS source identity."));return None
+        body=response.json();return body if isinstance(body,dict) else None
+    except requests.RequestException as exc:
+        st.error(f"Unable to load DhanushGuard source identity: {exc}");return None
+
+
+def refresh_aws_scan(connection_id: int) -> dict | None:
+    """Create a new immutable discovery snapshot using automatic AWS auth."""
+    try:
+        with st.spinner("Authenticating automatically and refreshing AWS discovery..."):
+            response=requests.post(
+                f"{API_BASE_URL}/aws/connections/{connection_id}/scan/refresh",
+                headers=get_auth_headers(),
+                timeout=FULL_SCAN_TIMEOUT,
+            )
+        if response.status_code != 200:
+            st.error(get_error_detail(response,"Unable to refresh AWS discovery."))
+            return None
+        body=response.json()
+        return body if isinstance(body,dict) else None
+    except requests.RequestException as exc:
+        st.error(f"AWS discovery refresh failed: {exc}")
+        return None
+
 # ============================================================
 # LIGHTWEIGHT AWS DISCOVERY SCAN API
 # ============================================================
@@ -818,28 +1979,24 @@ def query_aws_account(
         body["client_round_trip_seconds"] = round_trip_seconds
 
         if response.status_code != 200:
-            detail = body.get("detail")
-
             return {
-                **body,
-                "status": str(
-                    body.get("status", "ERROR")
-                ).upper(),
-                "answer": str(
-                    detail
-                    or body.get("answer")
-                    or "Unable to process the AWS question."
+                "status": str(body.get("status", "ERROR")).upper(),
+                "answer": (
+                    "I couldn't complete that request right now. "
+                    "Please try again."
                 ),
-                "raw": body,
                 "client_round_trip_seconds": round_trip_seconds,
             }
 
         return body
 
-    except requests.RequestException as exc:
+    except requests.RequestException:
         return {
             "status": "ERROR",
-            "answer": f"AWS query failed: {exc}",
+            "answer": (
+                "I couldn't complete that request right now. "
+                "Please try again."
+            ),
             "client_round_trip_seconds": round(
                 perf_counter() - request_started,
                 2,
@@ -890,65 +2047,45 @@ def get_persisted_scan(
         return None
 
 
-def get_active_scan(
-    account_id: str | None = None,
-) -> dict | None:
-    """Restore the persisted active snapshot without triggering AWS discovery."""
+def get_active_scan(account_id: str | None = None) -> dict | None:
     try:
-        params = {"account_id": account_id} if account_id else None
-        response = requests.get(
+        response=requests.get(
             f"{API_BASE_URL}/aws/scans/active",
-            params=params,
+            params=({"account_id":account_id} if account_id else None),
             headers=get_auth_headers(),
             timeout=REQUEST_TIMEOUT,
         )
-        if response.status_code == 404:
-            return None
-        if response.status_code != 200:
-            return None
-        payload = response.json()
-        return payload if isinstance(payload, dict) else None
+        if response.status_code==404:return None
+        if response.status_code!=200:return None
+        body=response.json();return body if isinstance(body,dict) else None
     except requests.RequestException:
         return None
 
 
 def activate_scan(scan_id: str) -> dict | None:
-    """Manually select one immutable historical snapshot as active."""
     try:
-        response = requests.put(
+        response=requests.put(
             f"{API_BASE_URL}/aws/scans/{scan_id}/activate",
-            headers=get_auth_headers(),
-            timeout=REQUEST_TIMEOUT,
+            headers=get_auth_headers(),timeout=REQUEST_TIMEOUT,
         )
-        if response.status_code != 200:
-            st.error(get_error_detail(response, "Unable to activate saved scan."))
-            return None
-        payload = response.json()
-        return payload if isinstance(payload, dict) else None
+        if response.status_code!=200:
+            st.error(get_error_detail(response,"Unable to activate saved scan."));return None
+        body=response.json();return body if isinstance(body,dict) else None
     except requests.RequestException as exc:
-        st.error(f"Unable to activate saved scan: {exc}")
-        return None
+        st.error(f"Unable to activate saved scan: {exc}");return None
 
 
-def refresh_aws_scan() -> dict | None:
-    """Explicitly create a fresh immutable discovery snapshot."""
+def get_aws_auth_status(connection_id: int | None = None) -> dict:
     try:
-        with st.spinner(
-            "Refreshing AWS discovery and creating a new saved snapshot..."
-        ):
-            response = requests.post(
-                f"{API_BASE_URL}/aws/scan/refresh",
-                headers=get_auth_headers(),
-                timeout=FULL_SCAN_TIMEOUT,
-            )
-        if response.status_code != 200:
-            st.error(get_error_detail(response, "Unable to refresh AWS discovery."))
-            return None
-        payload = response.json()
-        return payload if isinstance(payload, dict) else None
-    except requests.RequestException as exc:
-        st.error(f"AWS discovery refresh failed: {exc}")
-        return None
+        response=requests.get(
+            f"{API_BASE_URL}/aws/session/status",
+            params=({"connection_id":connection_id} if connection_id else None),
+            headers=get_auth_headers(),timeout=REQUEST_TIMEOUT,
+        )
+        if response.status_code!=200:return {}
+        body=response.json();return body if isinstance(body,dict) else {}
+    except requests.RequestException:
+        return {}
 
 
 # ============================================================
@@ -960,7 +2097,7 @@ def create_chat(
     title: str = "New AWS Chat",
     context: dict | None = None,
 ) -> dict | None:
-    """Create a persisted chat linked to one immutable discovery snapshot."""
+    """Create a persisted chat linked to an immutable discovery scan."""
     try:
         response = requests.post(
             f"{API_BASE_URL}/chats",
@@ -1041,7 +2178,7 @@ def query_chat(
     chat_id: int,
     question: str,
 ) -> dict | None:
-    """Ask from the saved scan; backend escalates to live AWS only when needed."""
+    """Ask a live AWS question inside a persisted chat session."""
     request_started = perf_counter()
 
     try:
@@ -1074,25 +2211,24 @@ def query_chat(
         body["client_round_trip_seconds"] = round_trip_seconds
 
         if response.status_code != 200:
-            detail = body.get("detail")
             return {
-                **body,
                 "status": str(body.get("status", "ERROR")).upper(),
-                "answer": str(
-                    detail
-                    or body.get("answer")
-                    or "Unable to process the AWS question."
+                "answer": (
+                    "I couldn't complete that request right now. "
+                    "Please try again."
                 ),
-                "raw": body,
                 "client_round_trip_seconds": round_trip_seconds,
             }
 
         return body
 
-    except requests.RequestException as exc:
+    except requests.RequestException:
         return {
             "status": "ERROR",
-            "answer": f"AWS chat query failed: {exc}",
+            "answer": (
+                "I couldn't complete that request right now. "
+                "Please try again."
+            ),
             "client_round_trip_seconds": round(
                 perf_counter() - request_started,
                 2,
@@ -1122,282 +2258,13 @@ def _open_chat_session(
     st.session_state["active_chat"] = chat
 
 
-def _open_context_chat(
-    *,
-    context: dict,
-    title: str,
-) -> None:
-    """Create a chat anchored to the current scan and structured UI selection."""
-    scan_data = st.session_state.get("aws_scan") or {}
-    scan_id = scan_data.get("scan_id")
-    if not scan_id:
-        st.error("A completed saved discovery scan is required before opening chat.")
-        return
-
-    structured_context = {
-        **context,
-        "scan_id": str(scan_id),
-    }
-    created = create_chat(
-        scan_id=str(scan_id),
-        title=title[:200],
-        context=structured_context,
-    )
-    if not created:
-        return
-
-    st.session_state["active_chat_id"] = created.get("id")
-    st.session_state["active_chat"] = created
-    st.session_state["active_page"] = "chat"
-    st.rerun()
-
-
-def _service_context_from_classification(item: dict) -> dict:
-    billing_services = item.get("billing_services") or []
-    regions = item.get("regions") or []
-    display_name = (
-        (billing_services[0] if billing_services else None)
-        or item.get("discovered_service")
-        or item.get("key")
-        or "AWS Service"
-    )
-    return {
-        "context_type": "SERVICE",
-        "label": str(display_name),
-        "service": item.get("discovered_service"),
-        "service_key": item.get("key"),
-        "billing_service": billing_services[0] if billing_services else None,
-        "category": item.get("category"),
-        "financial_status": item.get("financial_status"),
-        "billing_amount": item.get("billing_amount"),
-        "currency": item.get("currency"),
-        "regions": regions,
-    }
-
-
-def _render_discovered_service_chat_buttons(
-    items: list[dict] | None,
-) -> None:
-    clean = [item for item in (items or []) if isinstance(item, dict) and item.get("service")]
-    if not clean:
-        return
-    st.caption("Select a discovered service to open contextual chat.")
-    columns = st.columns(3)
-    for index, item in enumerate(clean):
-        namespace = str(item.get("service"))
-        with columns[index % len(columns)]:
-            if st.button(
-                f"💬 {namespace}",
-                key=f"discovered_service_chat_{index}_{namespace}",
-                use_container_width=True,
-            ):
-                _open_context_chat(
-                    context={
-                        "context_type": "SERVICE",
-                        "label": namespace,
-                        "service": namespace,
-                        "resource_count": item.get("resource_count"),
-                        "regions": item.get("regions") or [],
-                        "category": "DISCOVERED_RESOURCE_BACKED",
-                    },
-                    title=f"{namespace} · Saved Scan",
-                )
-
-
-def _render_service_chat_buttons(
-    items: list[dict] | None,
-    *,
-    key_prefix: str,
-) -> None:
-    clean_items = [item for item in (items or []) if isinstance(item, dict)]
-    if not clean_items:
-        return
-
-    st.caption("Select a service to open a chat anchored to this saved scan.")
-    columns = st.columns(3)
-    for index, item in enumerate(clean_items):
-        context = _service_context_from_classification(item)
-        label = str(context.get("label") or "AWS Service")
-        with columns[index % len(columns)]:
-            if st.button(
-                f"💬 {label}",
-                key=f"{key_prefix}_{index}_{item.get('key') or label}",
-                use_container_width=True,
-            ):
-                _open_context_chat(
-                    context=context,
-                    title=f"{label} · Saved Scan",
-                )
-
-
-def _render_region_chat_buttons(
-    items: list[dict] | None,
-    *,
-    key_prefix: str,
-) -> None:
-    clean_items = [item for item in (items or []) if isinstance(item, dict) and item.get("region")]
-    if not clean_items:
-        return
-    columns = st.columns(4)
-    for index, item in enumerate(clean_items):
-        region = str(item.get("region"))
-        with columns[index % len(columns)]:
-            if st.button(
-                f"💬 {region}",
-                key=f"{key_prefix}_{index}_{region}",
-                use_container_width=True,
-            ):
-                _open_context_chat(
-                    context={
-                        "context_type": "REGION",
-                        "label": region,
-                        "region": region,
-                        "category": item.get("category"),
-                        "billing_amount": item.get("billing_amount"),
-                        "resource_count": item.get("resource_count"),
-                    },
-                    title=f"{region} · Saved Scan",
-                )
-
-
-def _render_billing_service_chat_selector(
-    service_costs: list[dict] | None,
-) -> None:
-    clean = [item for item in (service_costs or []) if isinstance(item, dict) and item.get("billing_service")]
-    if not clean:
-        return
-    options = [""] + [str(item.get("billing_service")) for item in clean]
-    selector_version = int(st.session_state.get("billing_service_selector_version", 0))
-    selected = st.selectbox(
-        "Open billing service in Chat",
-        options=options,
-        index=0,
-        key=f"billing_service_context_selector_{selector_version}",
-        placeholder="Choose a Cost Explorer service group...",
-    )
-    if not selected:
-        return
-    item = next((row for row in clean if str(row.get("billing_service")) == selected), None)
-    if not item:
-        return
-    st.session_state["billing_service_selector_version"] = selector_version + 1
-    _open_context_chat(
-        context={
-            "context_type": "BILLING_SERVICE",
-            "label": selected,
-            "billing_service": selected,
-            "billing_amount": item.get("amount"),
-            "currency": item.get("unit"),
-        },
-        title=f"{selected} · Billing Snapshot",
-    )
-
-
-def _render_zone_chat_selector(zones: list[dict] | None) -> None:
-    clean = [item for item in (zones or []) if isinstance(item, dict) and item.get("zone_name")]
-    if not clean:
-        return
-    options = [""] + [str(item.get("zone_name")) for item in clean]
-    version = int(st.session_state.get("zone_selector_version", 0))
-    selected = st.selectbox(
-        "Open Availability Zone in Chat",
-        options=options,
-        index=0,
-        key=f"zone_context_selector_{version}",
-        placeholder="Choose an Availability Zone...",
-    )
-    if not selected:
-        return
-    item = next((row for row in clean if str(row.get("zone_name")) == selected), None)
-    if not item:
-        return
-    st.session_state["zone_selector_version"] = version + 1
-    _open_context_chat(
-        context={
-            "context_type": "AVAILABILITY_ZONE",
-            "label": selected,
-            "availability_zone": selected,
-            "zone_id": item.get("zone_id"),
-            "region": item.get("region_name"),
-            "state": item.get("state"),
-            "zone_type": item.get("zone_type"),
-        },
-        title=f"{selected} · Saved Scan",
-    )
-
-
-def _render_resource_chat_selector(resources: list[dict] | None) -> None:
-    clean = [item for item in (resources or []) if isinstance(item, dict)]
-    if not clean:
-        return
-
-    options: list[str] = [""]
-    mapping: dict[str, dict] = {}
-    for index, item in enumerate(clean):
-        resource_id = item.get("resource_id") or item.get("arn") or f"resource-{index + 1}"
-        service = item.get("service") or "aws"
-        region = item.get("region") or "global/unknown"
-        label = f"{resource_id} · {service} · {region}"
-        # Make duplicate display values unique without changing evidence.
-        if label in mapping:
-            label = f"{label} · #{index + 1}"
-        options.append(label)
-        mapping[label] = item
-
-    selector_version = int(st.session_state.get("resource_selector_version", 0))
-    selected = st.selectbox(
-        "Open discovered resource in Chat",
-        options=options,
-        index=0,
-        key=f"resource_context_selector_{selector_version}",
-        placeholder="Choose a discovered AWS resource...",
-    )
-    if not selected:
-        return
-
-    item = mapping[selected]
-    resource_id = item.get("resource_id") or item.get("arn") or "AWS Resource"
-    # Reset before changing page so returning to Discovery does not reopen it.
-    st.session_state["resource_selector_version"] = selector_version + 1
-    _open_context_chat(
-        context={
-            "context_type": "RESOURCE",
-            "label": str(resource_id),
-            "resource_id": item.get("resource_id"),
-            "arn": item.get("arn"),
-            "service": item.get("service"),
-            "resource_type": item.get("resource_type"),
-            "region": item.get("region"),
-            "owning_account_id": item.get("owning_account_id"),
-        },
-        title=f"{resource_id} · Saved Scan",
-    )
-
-
 # ============================================================
 # BACKEND AWS SESSION
 # ============================================================
 
 def get_aws_backend_session_status() -> bool:
-    """Return True when the backend still has active transient AWS credentials."""
-    try:
-        response = requests.get(
-            f"{API_BASE_URL}/aws/session/status",
-            headers=get_auth_headers(),
-            timeout=REQUEST_TIMEOUT,
-        )
-
-        if response.status_code != 200:
-            return False
-
-        payload = response.json()
-        return bool(
-            isinstance(payload, dict)
-            and payload.get("connected") is True
-        )
-
-    except requests.RequestException:
-        return False
+    """Backward-compatible helper: True when automatic live AWS auth is configured."""
+    return bool(get_aws_auth_status().get("auto_connect"))
 
 
 def disconnect_aws_backend_session() -> None:
@@ -1466,6 +2333,90 @@ def clear_scan_results() -> None:
 # ============================================================
 # UI HELPERS
 # ============================================================
+
+def _open_context_chat(*, context: dict, title: str) -> None:
+    scan=st.session_state.get("aws_scan") or {}
+    scan_id=scan.get("scan_id")
+    if not scan_id:
+        st.error("A completed saved discovery scan is required before opening chat.")
+        return
+    created=create_chat(str(scan_id),title=title[:200],context={**context,"scan_id":str(scan_id)})
+    if created:
+        st.session_state["active_chat_id"]=created.get("id")
+        st.session_state["active_chat"]=created
+        st.session_state["active_page"]="chat"
+        st.rerun()
+
+def _render_context_buttons(items: list[dict], *, kind: str, key_prefix: str) -> None:
+    rows=[x for x in items if isinstance(x,dict)]
+    if not rows:return
+    cols=st.columns(3)
+    for i,item in enumerate(rows[:30]):
+        if kind=="SERVICE":
+            names=item.get("billing_services") or []
+            label=str((names[0] if names else None) or item.get("discovered_service") or item.get("service") or item.get("key") or "AWS Service")
+            context={"context_type":"SERVICE","label":label,"service":item.get("discovered_service") or item.get("service"),"billing_service":(names[0] if names else None),"category":item.get("category"),"regions":item.get("regions") or []}
+        elif kind=="REGION":
+            label=str(item.get("region") or item.get("region_name") or "AWS Region");context={"context_type":"REGION","label":label,"region":label,"category":item.get("category")}
+        else:
+            continue
+        with cols[i%3]:
+            if st.button(f"💬 {label}",key=f"{key_prefix}_{i}_{label}",use_container_width=True):
+                _open_context_chat(context=context,title=f"{label} · Saved Scan")
+
+def _render_resource_chat_selector(resources: list[dict]) -> None:
+    rows=[x for x in resources if isinstance(x,dict)]
+    if not rows:return
+    mapping={}; options=[""]
+    for i,item in enumerate(rows):
+        rid=item.get("resource_id") or item.get("arn") or f"resource-{i+1}"
+        label=f"{rid} · {item.get('service') or 'aws'} · {item.get('region') or 'global'}"
+        if label in mapping:label+=f" · #{i+1}"
+        mapping[label]=item;options.append(label)
+    version=int(st.session_state.get("resource_selector_version",0))
+    selected=st.selectbox("Open discovered resource in Chat",options=options,index=0,key=f"resource_context_selector_{version}",placeholder="Choose a discovered AWS resource...")
+    if selected:
+        item=mapping[selected];rid=item.get("resource_id") or item.get("arn") or "AWS Resource";st.session_state["resource_selector_version"]=version+1
+        _open_context_chat(context={"context_type":"RESOURCE","label":str(rid),"resource_id":item.get("resource_id"),"arn":item.get("arn"),"service":item.get("service"),"resource_type":item.get("resource_type"),"region":item.get("region")},title=f"{rid} · Saved Scan")
+
+def _format_cost(amount, currency="USD"):
+    try:return f"{currency} {float(amount or 0):,.2f}"
+    except (TypeError,ValueError):return f"{currency} 0.00"
+
+def render_billing_results(billing: dict | None) -> None:
+    if not billing:return
+    st.divider();st.subheader("Billing Evidence")
+    cols=st.columns(4)
+    cols[0].metric("Billing Access","Available" if billing.get("available") else "Unavailable")
+    cols[1].metric("Current Period Cost",_format_cost(billing.get("total_cost"),billing.get("currency") or "USD"))
+    cols[2].metric("Billed Services",len(billing.get("service_costs") or []))
+    cols[3].metric("Billing Regions",len(billing.get("region_costs") or []))
+    service_costs=billing.get("service_costs") or []
+    if service_costs:st.dataframe(service_costs,use_container_width=True,hide_index=True)
+    if not billing.get("available"):st.warning("Billing data is unavailable; paid/zero-cost classification may be incomplete.")
+
+def render_classification_results(data: dict | None) -> None:
+    if not data:return
+    st.divider();st.subheader("Infrastructure Classification")
+    primary=data.get("primary_paid_services") or []; zero=data.get("zero_cost_services") or []; supporting=data.get("supporting_services") or []; unbilled=data.get("discovered_unbilled_services") or []
+    cols=st.columns(5);cols[0].metric("Paid Services",len(primary));cols[1].metric("Zero-Cost",len(zero));cols[2].metric("Supporting",len(supporting));cols[3].metric("Unbilled",len(unbilled));cols[4].metric("Paid Regions",len(data.get("paid_regions") or []))
+    tabs=st.tabs(["Paid Services","Zero-Cost","Supporting","Regions"])
+    with tabs[0]:
+        if primary:st.dataframe(primary,use_container_width=True,hide_index=True);_render_context_buttons(primary,kind="SERVICE",key_prefix="primary_chat")
+        else:st.info("No paid resource-backed services classified.")
+    with tabs[1]:
+        if zero:st.dataframe(zero,use_container_width=True,hide_index=True);_render_context_buttons(zero,kind="SERVICE",key_prefix="zero_chat")
+        else:st.info("No zero-cost billing candidates classified.")
+    with tabs[2]:
+        if supporting:st.dataframe(supporting,use_container_width=True,hide_index=True);_render_context_buttons(supporting,kind="SERVICE",key_prefix="support_chat")
+        if unbilled:
+            with st.expander(f"Discovered unbilled ({len(unbilled)})"):
+                st.dataframe(unbilled,use_container_width=True,hide_index=True);_render_context_buttons(unbilled,kind="SERVICE",key_prefix="unbilled_chat")
+    with tabs[3]:
+        for title,key in (("Paid / Primary Regions","paid_regions"),("Used but Unbilled Regions","used_unbilled_regions"),("Enabled but Unused Regions","enabled_unused_regions"),("Billing-only Regions","billed_only_regions")):
+            rows=data.get(key) or [];st.markdown(f"#### {title}")
+            if rows:st.dataframe(rows,use_container_width=True,hide_index=True);_render_context_buttons(rows,kind="REGION",key_prefix=f"region_{key}")
+            else:st.caption("No Regions in this category.")
 
 def render_scan_warnings(
     warnings: list,
@@ -1572,16 +2523,6 @@ def render_region_results(
             use_container_width=True,
             hide_index=True,
         )
-        _render_region_chat_buttons(
-            [
-                {
-                    "region": item.get("region_name"),
-                    "category": "ENABLED_REGION",
-                }
-                for item in enabled_region_rows
-            ],
-            key_prefix="enabled_region_chat",
-        )
     else:
         st.info(
             "No enabled AWS Regions were returned."
@@ -1638,7 +2579,6 @@ def render_zone_results(
             use_container_width=True,
             hide_index=True,
         )
-        _render_zone_chat_selector(zones)
     else:
         st.info(
             "No Availability Zones were returned."
@@ -1731,33 +2671,12 @@ def render_resource_inventory(
     )
 
     if detected_services:
-        service_rows = []
-        for item in detected_services:
-            if not isinstance(item, dict):
-                continue
-            namespace = str(item.get("service") or "").strip()
-            if not namespace:
-                continue
-            service_rows.append(
-                {
-                    "service_namespace": namespace,
-                    "resources": item.get("resource_count", 0),
-                    "regions": ", ".join(
-                        map(str, item.get("regions") or [])
-                    ) or "-",
-                    "evidence": "Resource Explorer resource",
-                }
-            )
-
-        if service_rows:
-            st.dataframe(
-                service_rows,
-                use_container_width=True,
-                hide_index=True,
-            )
-            _render_discovered_service_chat_buttons(detected_services)
-        else:
-            st.info("No resource-backed AWS services were detected.")
+        st.dataframe(
+            detected_services,
+            use_container_width=True,
+            hide_index=True,
+        )
+        _render_context_buttons(detected_services,kind="SERVICE",key_prefix="detected_service_chat")
     else:
         st.info(
             "No AWS services with discoverable resources "
@@ -1821,7 +2740,6 @@ def render_resource_inventory(
             use_container_width=True,
             hide_index=True,
         )
-
         _render_resource_chat_selector(resources)
 
         with st.expander(
@@ -1837,450 +2755,6 @@ def render_resource_inventory(
         )
 
 
-def _format_currency_amount(
-    amount: object,
-    currency: str = "USD",
-) -> str:
-    """Format backend billing values safely for UI display."""
-    try:
-        numeric_amount = float(amount or 0)
-    except (TypeError, ValueError):
-        numeric_amount = 0.0
-
-    normalized_currency = str(currency or "USD").strip() or "USD"
-    return f"{normalized_currency} {numeric_amount:,.2f}"
-
-
-def _classified_service_rows(
-    services: list[dict] | None,
-) -> list[dict]:
-    """Flatten classified service objects into readable table rows."""
-    rows: list[dict] = []
-
-    for item in services or []:
-        if not isinstance(item, dict):
-            continue
-
-        billing_services = item.get("billing_services") or []
-        regions = item.get("regions") or []
-        related = item.get("related_primary_services") or []
-
-        # Prefer the official Cost Explorer SERVICE label for user-facing
-        # display. The discovered namespace is still retained separately as
-        # technical evidence. This prevents SDK/API identifiers from becoming
-        # the main service name shown to the auditor.
-        service_name = (
-            (billing_services[0] if billing_services else None)
-            or item.get("discovered_service")
-            or "-"
-        )
-
-        confidence = item.get("billing_match_confidence")
-        if isinstance(confidence, (int, float)):
-            confidence_display = round(float(confidence), 3)
-        else:
-            confidence_display = None
-
-        rows.append(
-            {
-                "service": service_name,
-                "resource_namespace": item.get("discovered_service") or "-",
-                "category": item.get("category", "-"),
-                "financial_status": item.get("financial_status", "-"),
-                "paid": bool(item.get("paid")),
-                "cost": _format_currency_amount(
-                    item.get("billing_amount"),
-                    str(item.get("currency") or "USD"),
-                ),
-                "resources": item.get("resource_count", 0),
-                "regions": ", ".join(map(str, regions)) if regions else "-",
-                "billing_services": (
-                    ", ".join(map(str, billing_services))
-                    if billing_services
-                    else "-"
-                ),
-                "related_primary_services": (
-                    ", ".join(map(str, related))
-                    if related
-                    else "-"
-                ),
-                "billing_match": item.get("billing_match_method") or "-",
-                "match_confidence": confidence_display,
-            }
-        )
-
-    return rows
-
-
-def _classified_region_rows(
-    regions: list[dict] | None,
-) -> list[dict]:
-    """Flatten classified Region objects into readable table rows."""
-    rows: list[dict] = []
-
-    for item in regions or []:
-        if not isinstance(item, dict):
-            continue
-
-        rows.append(
-            {
-                "region": item.get("region", "-"),
-                "category": item.get("category", "-"),
-                "cost": _format_currency_amount(
-                    item.get("billing_amount"),
-                    str(item.get("currency") or "USD"),
-                ),
-                "resources": item.get("resource_count", 0),
-                "enabled": bool(item.get("enabled")),
-            }
-        )
-
-    return rows
-
-
-def render_billing_results(
-    billing_data: dict | None,
-) -> None:
-    """Render dynamic Cost Explorer evidence returned by the backend."""
-    if not billing_data:
-        return
-
-    st.divider()
-    st.subheader("Billing Evidence")
-
-    available = billing_data.get("available") is True
-    currency = str(billing_data.get("currency") or "USD")
-    service_costs = billing_data.get("service_costs") or []
-    region_costs = billing_data.get("region_costs") or []
-    components = billing_data.get("components") or []
-
-    billing_cols = st.columns(4)
-
-    with billing_cols[0]:
-        st.metric("Billing Access", "Available" if available else "Unavailable")
-
-    with billing_cols[1]:
-        st.metric(
-            "Current Period Cost",
-            _format_currency_amount(
-                billing_data.get("total_cost"),
-                currency,
-            ),
-        )
-
-    with billing_cols[2]:
-        st.metric("Billed Services", len(service_costs))
-
-    with billing_cols[3]:
-        st.metric("Billing Regions", len(region_costs))
-
-    period_start = billing_data.get("period_start")
-    period_end = billing_data.get("period_end_exclusive")
-    metric = billing_data.get("metric") or "UnblendedCost"
-
-    if period_start or period_end:
-        st.caption(
-            f"Billing window: {period_start or '-'} to {period_end or '-'} "
-            f"(end exclusive) · Metric: {metric}"
-        )
-
-    if not available:
-        st.warning(
-            "Billing data is unavailable for this scan. Infrastructure discovery "
-            "can still be used, but paid/primary classification may be incomplete."
-        )
-
-    service_tab, region_tab, component_tab = st.tabs(
-        ["Service Cost", "Region Cost", "Billing Components"]
-    )
-
-    with service_tab:
-        if service_costs:
-            rows = []
-            for item in service_costs:
-                if not isinstance(item, dict):
-                    continue
-                try:
-                    amount = float(item.get("amount") or 0)
-                except (TypeError, ValueError):
-                    amount = 0.0
-
-                if amount > 1e-9:
-                    cost_status = "POSITIVE_COST"
-                elif amount < -1e-9:
-                    cost_status = "CREDIT_OR_ADJUSTMENT"
-                else:
-                    cost_status = "ZERO_COST"
-
-                rows.append(
-                    {
-                        "billing_service": item.get("billing_service", "-"),
-                        "amount": amount,
-                        "unit": item.get("unit", currency),
-                        "cost_status": cost_status,
-                    }
-                )
-            st.dataframe(rows, use_container_width=True, hide_index=True)
-            _render_billing_service_chat_selector(service_costs)
-        else:
-            st.info("No service-level billing groups were returned.")
-
-    with region_tab:
-        if region_costs:
-            rows = [
-                {
-                    "region": item.get("region", "-"),
-                    "amount": item.get("amount", 0),
-                    "unit": item.get("unit", currency),
-                }
-                for item in region_costs
-                if isinstance(item, dict)
-            ]
-            st.dataframe(rows, use_container_width=True, hide_index=True)
-        else:
-            st.info("No Region-level billing groups were returned.")
-
-    with component_tab:
-        if components:
-            rows = [
-                {
-                    "billing_service": item.get("billing_service", "-"),
-                    "usage_type": item.get("usage_type", "-"),
-                    "amount": item.get("amount", 0),
-                    "unit": item.get("unit", currency),
-                }
-                for item in components
-                if isinstance(item, dict)
-            ]
-            st.dataframe(rows, use_container_width=True, hide_index=True)
-        else:
-            st.info("No SERVICE + USAGE_TYPE billing components were returned.")
-
-    with st.expander("View Complete Billing Data", expanded=False):
-        st.json(billing_data)
-
-
-def render_classification_results(
-    classification_data: dict | None,
-) -> None:
-    """Render billing-aware service and Region classification."""
-    if not classification_data:
-        return
-
-    st.divider()
-    st.subheader("Infrastructure Classification")
-
-    primary = classification_data.get("primary_paid_services") or []
-    zero_cost = classification_data.get("zero_cost_services") or []
-    supporting = classification_data.get("supporting_services") or []
-    unbilled = classification_data.get("discovered_unbilled_services") or []
-    billing_only = classification_data.get("billing_only_services") or []
-    non_positive = classification_data.get("non_positive_billing_services") or []
-
-    # New scans keep billing-only Cost Explorer groups separate in the backend.
-    # The fallback below also handles older persisted scans created before that
-    # field existed. No service names are hard-coded.
-    primary_resource_backed = [
-        item
-        for item in primary
-        if isinstance(item, dict) and item.get("discovered_service")
-    ]
-    legacy_billing_only = [
-        item
-        for item in primary
-        if isinstance(item, dict) and not item.get("discovered_service")
-    ]
-    billing_only_primary = [
-        *[item for item in billing_only if isinstance(item, dict)],
-        *legacy_billing_only,
-    ]
-
-    paid_regions = classification_data.get("paid_regions") or []
-    used_unbilled_regions = (
-        classification_data.get("used_unbilled_regions") or []
-    )
-    enabled_unused_regions = (
-        classification_data.get("enabled_unused_regions") or []
-    )
-    billed_only_regions = classification_data.get("billed_only_regions") or []
-    relationships = classification_data.get("relationships") or []
-
-    summary_cols = st.columns(5)
-    with summary_cols[0]:
-        st.metric("Primary Paid AWS Services", len(primary_resource_backed))
-    with summary_cols[1]:
-        st.metric("Zero-Cost Candidates", len(zero_cost))
-    with summary_cols[2]:
-        st.metric("Supporting Services", len(supporting))
-    with summary_cols[3]:
-        st.metric("Discovered Unbilled", len(unbilled))
-    with summary_cols[4]:
-        st.metric("Paid Regions", len(paid_regions))
-
-    st.caption(
-        "Primary/paid AWS services require discovered resource evidence plus "
-        "positive billing cost. A Zero-Cost / Free-Tier Candidate has a matched "
-        "Cost Explorer SERVICE record whose net cost is zero; this does not by "
-        "itself prove AWS Free Tier or trial eligibility. Supporting classification "
-        "is derived from resource relationships. No fixed service allow/deny list "
-        "is used."
-    )
-
-    service_tab, region_tab, relationship_tab = st.tabs(
-        ["Service Classification", "Region Classification", "Relationships"]
-    )
-
-    with service_tab:
-        st.markdown("#### Primary / Paid AWS Services")
-        rows = _classified_service_rows(primary_resource_backed)
-        if rows:
-            st.dataframe(rows, use_container_width=True, hide_index=True)
-            _render_service_chat_buttons(
-                primary_resource_backed,
-                key_prefix="primary_service_chat",
-            )
-        else:
-            st.info(
-                "No positively billed services were mapped to discovered "
-                "AWS infrastructure for this scan."
-            )
-
-        if billing_only_primary:
-            with st.expander(
-                "Billing entries not mapped to discovered infrastructure "
-                f"({len(billing_only_primary)})",
-                expanded=False,
-            ):
-                st.caption(
-                    "These values came from Cost Explorer SERVICE groups but "
-                    "were not matched to a resource-backed service namespace, "
-                    "so they are not shown as discovered AWS infrastructure."
-                )
-                st.dataframe(
-                    _classified_service_rows(billing_only_primary),
-                    use_container_width=True,
-                    hide_index=True,
-                )
-
-        st.markdown("#### Zero-Cost / Free-Tier Candidates")
-        zero_rows = _classified_service_rows(zero_cost)
-        if zero_rows:
-            st.caption(
-                "These services have discovered resource evidence and a matched "
-                "Cost Explorer SERVICE record with net cost 0. They may be Free "
-                "Tier/trial, permanently free usage, discounted usage, credits, "
-                "or another zero-cost case; the scan does not claim the exact "
-                "commercial reason without stronger billing evidence."
-            )
-            st.dataframe(zero_rows, use_container_width=True, hide_index=True)
-            _render_service_chat_buttons(
-                zero_cost,
-                key_prefix="zero_cost_service_chat",
-            )
-        else:
-            st.info("No resource-backed zero-cost billing services were classified.")
-
-        st.markdown("#### Supporting / Related AWS Services")
-        rows = _classified_service_rows(supporting)
-        if rows:
-            st.dataframe(rows, use_container_width=True, hide_index=True)
-            _render_service_chat_buttons(
-                supporting,
-                key_prefix="supporting_service_chat",
-            )
-        else:
-            st.info("No supporting service relationships were classified.")
-
-        with st.expander(
-            f"Discovered but Unbilled Services ({len(unbilled)})",
-            expanded=False,
-        ):
-            rows = _classified_service_rows(unbilled)
-            if rows:
-                st.dataframe(rows, use_container_width=True, hide_index=True)
-                _render_service_chat_buttons(
-                    unbilled,
-                    key_prefix="unbilled_service_chat",
-                )
-            else:
-                st.info("No discovered unbilled services were classified.")
-
-        if non_positive:
-            with st.expander(
-                f"Non-Positive Billing Services ({len(non_positive)})",
-                expanded=False,
-            ):
-                st.dataframe(
-                    _classified_service_rows(non_positive),
-                    use_container_width=True,
-                    hide_index=True,
-                )
-
-    with region_tab:
-        region_groups = [
-            ("Paid / Primary Regions", paid_regions),
-            ("Used but Unbilled Regions", used_unbilled_regions),
-            ("Enabled but Unused Regions", enabled_unused_regions),
-            ("Billing-Only Regions", billed_only_regions),
-        ]
-
-        for title, items in region_groups:
-            st.markdown(f"#### {title}")
-            rows = _classified_region_rows(items)
-            if rows:
-                st.dataframe(rows, use_container_width=True, hide_index=True)
-                _render_region_chat_buttons(
-                    items,
-                    key_prefix=f"region_chat_{title.lower().replace(' ', '_').replace('/', '_')}",
-                )
-            else:
-                st.caption("No Regions in this category.")
-
-    with relationship_tab:
-        if relationships:
-            relationship_rows = []
-            for item in relationships:
-                if not isinstance(item, dict):
-                    continue
-                relationship_rows.append(
-                    {
-                        "source_service": item.get("source_service") or "-",
-                        "source_resource": (
-                            item.get("source_resource_id")
-                            or item.get("source_arn")
-                            or "-"
-                        ),
-                        "target_service": item.get("target_service") or "-",
-                        "target_resource": (
-                            item.get("target_resource_id")
-                            or item.get("target_arn")
-                            or "-"
-                        ),
-                        "evidence": item.get("evidence") or "-",
-                    }
-                )
-
-            st.dataframe(
-                relationship_rows,
-                use_container_width=True,
-                hide_index=True,
-            )
-        else:
-            st.info("No resource-to-resource relationships were inferred.")
-
-    classification_warnings = classification_data.get("warnings") or []
-    if classification_warnings:
-        with st.expander(
-            f"Classification Warnings ({len(classification_warnings)})",
-            expanded=False,
-        ):
-            for warning in classification_warnings:
-                st.warning(str(warning))
-
-    with st.expander("View Complete Classification Data", expanded=False):
-        st.json(classification_data)
-
-
 # Deep service scan renderers removed. Detailed configuration is queried
 # on demand through the NLP -> generic read-only AWS MCP query flow.
 
@@ -2291,8 +2765,6 @@ def render_scan_status(
     region_data: dict | None,
     zone_data: dict | None,
     resource_data: dict | None,
-    billing_data: dict | None,
-    classification_data: dict | None,
 ) -> None:
     """
     Render the current scan pipeline status.
@@ -2362,20 +2834,16 @@ def render_scan_status(
         {
             "stage": "Billing Discovery",
             "status": (
-                (
-                    "Completed"
-                    if billing_data.get("available") is True
-                    else "Unavailable / Partial"
-                )
-                if billing_data
+                "Completed"
+                if (scan_data or {}).get("billing")
                 else "Pending"
             ),
         },
         {
-            "stage": "Billing-Aware Classification",
+            "stage": "Billing-aware Classification",
             "status": (
                 "Completed"
-                if classification_data
+                if (scan_data or {}).get("classification")
                 else "Pending"
             ),
         },
@@ -2483,11 +2951,155 @@ def render_app_sidebar(
             )
 
         # ====================================================
+        # ACTIVE CLIENT WORKSPACE
+        # ====================================================
+
+        st.markdown(
+            '<div class="cc-sidebar-label">Client workspace</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<div class="cc-workspace-help">Select the client context used for AWS data, scans and chat.</div>',
+            unsafe_allow_html=True,
+        )
+
+        workspaces = get_workspaces()
+        st.session_state["workspace_list"] = workspaces
+        active_workspace = st.session_state.get("active_workspace") or {}
+
+        if workspaces:
+            workspace_by_id = {
+                int(item["id"]): item
+                for item in workspaces
+                if item.get("id") is not None
+            }
+            workspace_ids = list(workspace_by_id)
+            active_workspace_id = active_workspace.get("id")
+            if active_workspace_id not in workspace_by_id:
+                switch_workspace(workspace_by_id[workspace_ids[0]])
+                active_workspace = st.session_state.get("active_workspace") or {}
+                active_workspace_id = active_workspace.get("id")
+
+            selected_workspace_id = st.selectbox(
+                "Workspace",
+                options=workspace_ids,
+                index=(
+                    workspace_ids.index(active_workspace_id)
+                    if active_workspace_id in workspace_ids
+                    else 0
+                ),
+                format_func=lambda workspace_id: workspace_by_id[workspace_id].get(
+                    "name", f"Workspace {workspace_id}"
+                ),
+                label_visibility="collapsed",
+                key=f"sidebar_workspace_selector_{active_workspace_id}",
+            )
+
+            if selected_workspace_id != active_workspace_id:
+                switch_workspace(workspace_by_id[selected_workspace_id])
+                st.rerun()
+
+        with st.expander("＋ Create client workspace", expanded=False):
+            with st.form("sidebar_create_workspace_form"):
+                new_workspace_name = st.text_input(
+                    "Client name",
+                    placeholder="Example: ABC Ltd",
+                    key="sidebar_new_workspace_name",
+                )
+                create_workspace_clicked = st.form_submit_button(
+                    "Create",
+                    use_container_width=True,
+                )
+
+            if create_workspace_clicked:
+                if len(new_workspace_name.strip()) < 2:
+                    st.error("Enter a valid client/workspace name.")
+                else:
+                    created_workspace = create_workspace(new_workspace_name)
+                    if created_workspace:
+                        switch_workspace(created_workspace)
+                        st.success("Workspace created.")
+                        st.rerun()
+
+        active_workspace = st.session_state.get("active_workspace") or {}
+        if active_workspace and active_workspace.get("role") == "OWNER":
+            with st.expander("⚙ Manage current workspace", expanded=False):
+                current_workspace_name = str(active_workspace.get("name") or "")
+
+                with st.form(
+                    f"sidebar_rename_workspace_form_{active_workspace.get('id')}"
+                ):
+                    renamed_workspace_name = st.text_input(
+                        "Workspace name",
+                        value=current_workspace_name,
+                        key=f"sidebar_rename_workspace_name_{active_workspace.get('id')}",
+                    )
+                    rename_workspace_clicked = st.form_submit_button(
+                        "Update workspace name",
+                        use_container_width=True,
+                    )
+
+                if rename_workspace_clicked:
+                    cleaned_name = renamed_workspace_name.strip()
+                    if len(cleaned_name) < 2:
+                        st.error("Enter a valid workspace name.")
+                    elif cleaned_name == current_workspace_name:
+                        st.info("Workspace name is unchanged.")
+                    else:
+                        updated_workspace = rename_workspace(
+                            int(active_workspace["id"]),
+                            cleaned_name,
+                        )
+                        if updated_workspace:
+                            st.session_state["active_workspace"] = updated_workspace
+                            st.session_state.pop("workspace_list", None)
+                            st.success("Workspace name updated.")
+                            st.rerun()
+
+                st.markdown(
+                    '<div class="cc-workspace-danger-title">Delete workspace</div>',
+                    unsafe_allow_html=True,
+                )
+                st.caption(
+                    "This permanently removes this workspace and its AWS "
+                    "connections, saved scans and chats."
+                )
+                delete_confirmation = st.text_input(
+                    "Type the workspace name to confirm",
+                    placeholder=current_workspace_name,
+                    key=f"sidebar_delete_workspace_confirm_{active_workspace.get('id')}",
+                )
+                delete_enabled = (
+                    delete_confirmation.strip() == current_workspace_name
+                    and bool(current_workspace_name)
+                )
+                delete_workspace_clicked = st.button(
+                    "Delete workspace",
+                    key=f"sidebar_delete_workspace_{active_workspace.get('id')}",
+                    use_container_width=True,
+                )
+
+                if delete_workspace_clicked:
+                    if not delete_enabled:
+                        st.warning(
+                            f'Type "{current_workspace_name}" exactly to confirm deletion.'
+                        )
+                        return
+                    deleted_workspace_id = int(active_workspace["id"])
+                    if delete_workspace(deleted_workspace_id):
+                        clear_workspace_runtime_state()
+                        st.session_state.pop("active_workspace", None)
+                        st.session_state.pop("workspace_list", None)
+                        st.session_state.pop("workspace_bootstrap_id", None)
+                        st.success("Workspace deleted.")
+                        st.rerun()
+
+        # ====================================================
         # MAIN NAVIGATION
         # ====================================================
 
         st.markdown(
-            '<div class="cc-sidebar-label">Workspace</div>',
+            '<div class="cc-sidebar-label">Navigation</div>',
             unsafe_allow_html=True,
         )
 
@@ -2511,15 +3123,6 @@ def render_app_sidebar(
                     else "secondary"
                 ),
             ):
-                # Home/Discovery always return to the persisted active snapshot.
-                # Historical chats remain tied to their own scan while open.
-                if page_key in {"home", "discovery"}:
-                    active_snapshot = get_active_scan()
-                    if active_snapshot:
-                        st.session_state["aws_scan"] = active_snapshot
-                        st.session_state["aws_connection"] = active_snapshot.get(
-                            "account", {}
-                        )
                 st.session_state[
                     "active_page"
                 ] = page_key
@@ -2743,13 +3346,6 @@ def render_template1_overview(
 
     st.write("")
 
-    completed_at = scan_data.get("completed_at") or scan_data.get("started_at")
-    active_label = "Active saved snapshot" if scan_data.get("is_active") else "Saved historical snapshot"
-    st.caption(
-        f"{active_label} · Scan ID: {str(scan_data.get('scan_id') or '-')[:16]}"
-        + (f" · Scanned: {completed_at}" if completed_at else "")
-    )
-
     metric_cols = st.columns(4)
 
     with metric_cols[0]:
@@ -2776,39 +3372,17 @@ def render_template1_overview(
             summary.get("discovered_resources", 0),
         )
 
-    billing_metric_cols = st.columns(5)
-
-    with billing_metric_cols[0]:
-        st.metric(
-            "💳 Billing",
-            "Available"
-            if summary.get("billing_available")
-            else "Unavailable",
-        )
-
-    with billing_metric_cols[1]:
-        st.metric(
-            "Paid Services",
-            summary.get("primary_paid_services", 0),
-        )
-
-    with billing_metric_cols[2]:
-        st.metric(
-            "Zero-Cost",
-            summary.get("zero_cost_services", 0),
-        )
-
-    with billing_metric_cols[3]:
-        st.metric(
-            "Supporting Services",
-            summary.get("supporting_services", 0),
-        )
-
-    with billing_metric_cols[4]:
-        st.metric(
-            "Paid Regions",
-            summary.get("paid_regions", 0),
-        )
+    billing_cols = st.columns(5)
+    with billing_cols[0]:
+        st.metric("Billing", "Available" if summary.get("billing_available") else "Unavailable")
+    with billing_cols[1]:
+        st.metric("Paid Services", summary.get("primary_paid_services", 0))
+    with billing_cols[2]:
+        st.metric("Zero-Cost", summary.get("zero_cost_services", 0))
+    with billing_cols[3]:
+        st.metric("Supporting", summary.get("supporting_services", 0))
+    with billing_cols[4]:
+        st.metric("Paid Regions", summary.get("paid_regions", 0))
 
 
 def _query_status_label(result: dict | None) -> str:
@@ -2926,10 +3500,6 @@ def _render_query_evidence(result: dict) -> None:
 
     st.caption(f"Query status: {status}")
 
-    source = result.get("source")
-    if source:
-        st.caption(f"Evidence source: {source}")
-
     intent = result.get("intent")
     if intent:
         st.markdown("**Resolved Query Plan**")
@@ -2956,10 +3526,6 @@ def _render_query_evidence(result: dict) -> None:
             else:
                 st.warning(str(warning))
 
-    raw_error = result.get("raw")
-    if raw_error is not None:
-        st.markdown("**Backend Error Payload**")
-        st.json(raw_error)
 
 
 def _extract_query_answer(
@@ -3038,7 +3604,12 @@ def render_aws_ai_chat(
         )
         return
 
-    backend_session_active = get_aws_backend_session_status()
+    auth_status = get_aws_auth_status(
+        scan_data.get("aws_connection_id")
+        or aws_connection.get("aws_connection_id")
+        or aws_connection.get("id")
+    )
+    automatic_live_access = bool(auth_status.get("auto_connect"))
 
     active_chat_id = st.session_state.get("active_chat_id")
 
@@ -3084,19 +3655,18 @@ def render_aws_ai_chat(
             f"""
             <div class="chat-heading">🤖 {chat.get("title") or "AWS AI Assistant"}</div>
             <div class="chat-subtitle">
-                Ask naturally about the saved discovery snapshot. Questions that truly
-                require current AWS state can automatically use live read-only AWS MCP
-                when a live AWS session is connected.
+                Ask about the saved discovery snapshot. If current AWS evidence is needed,
+                DhanushGuard authenticates automatically and uses read-only AWS MCP.
             </div>
             """,
             unsafe_allow_html=True,
         )
 
     with session_col:
-        if backend_session_active:
-            st.success("Live AWS connected")
+        if automatic_live_access:
+            st.success("Automatic AWS access ready")
         else:
-            st.info("Live AWS not connected")
+            st.info("Snapshot-only until AWS auth is configured")
 
     st.caption(
         f"Chat #{chat.get('id')} · Snapshot: {str(scan_id)[:12]}… · "
@@ -3105,15 +3675,14 @@ def render_aws_ai_chat(
 
     chat_context = chat.get("context") or {}
     if chat_context:
-        context_type = chat_context.get("context_type") or "CONTEXT"
-        context_label = chat_context.get("label") or chat_context.get("resource_id") or chat_context.get("region") or "Selected item"
+        context_type=chat_context.get("context_type") or "CONTEXT"
+        context_label=chat_context.get("label") or chat_context.get("resource_id") or chat_context.get("region") or "Selected item"
         st.info(f"Selected {context_type}: {context_label}")
 
-    if not backend_session_active:
+    if not automatic_live_access:
         st.info(
-            "Saved-snapshot questions remain available. Live AWS credentials are kept only "
-            "in backend memory and may be cleared by a server restart/reload. Reconnect "
-            "only for current/live AWS queries or a manual refresh."
+            "Saved-snapshot questions remain available. Current/live AWS queries will "
+            "require a configured PERSISTED_KEYS or ASSUME_ROLE connection."
         )
 
     messages = chat.get("messages") or []
@@ -3137,9 +3706,8 @@ def render_aws_ai_chat(
                     source = evidence.get("source") if isinstance(evidence, dict) else None
                     if source == "PERSISTED_DISCOVERY_SNAPSHOT":
                         st.caption("Source: saved immutable discovery snapshot")
-                    elif source == "LIVE_AWS_MCP":
-                        st.caption("Source: live read-only AWS MCP query")
-
+                    elif str(source or "").startswith("LIVE_AWS_MCP"):
+                        st.caption("Source: live read-only AWS MCP · automatic authentication")
                     response_time_ms = message.get("response_time_ms")
                     if response_time_ms is not None:
                         try:
@@ -3149,7 +3717,7 @@ def render_aws_ai_chat(
                             pass
 
     question = st.chat_input(
-        "Ask about this saved AWS snapshot or request current/live AWS state...",
+        "Ask about the saved snapshot or current AWS state...",
         disabled=False,
         key=f"chat_input_{chat.get('id')}",
     )
@@ -3167,7 +3735,7 @@ def render_aws_ai_chat(
 
     with st.chat_message("assistant"):
         with st.spinner(
-            "Resolving the question from the saved snapshot or live AWS evidence..."
+            "Resolving from the saved snapshot and automatically using live AWS when required..."
         ):
             query_result = query_chat(
                 chat_id=int(chat.get("id")),
@@ -3183,11 +3751,11 @@ def render_aws_ai_chat(
             st.warning(answer)
 
         if isinstance(query_result, dict):
-            source = query_result.get("source")
-            if source == "PERSISTED_DISCOVERY_SNAPSHOT":
+            source=query_result.get("source")
+            if source=="PERSISTED_DISCOVERY_SNAPSHOT":
                 st.caption("Source: saved immutable discovery snapshot")
-            elif source == "LIVE_AWS_MCP":
-                st.caption("Source: live read-only AWS MCP query")
+            elif str(source or "").startswith("LIVE_AWS_MCP"):
+                st.caption("Source: live read-only AWS MCP · automatic authentication")
             _render_query_timing(query_result)
 
             with st.expander(
@@ -3202,65 +3770,6 @@ def render_aws_ai_chat(
         st.session_state["active_chat"] = refreshed
 
     st.rerun()
-
-
-def render_reconnect_aws_form(expected_account_id: str | None = None) -> None:
-    """Reconnect transient AWS credentials without replacing the saved snapshot."""
-    with st.expander("Reconnect AWS for live queries / manual refresh", expanded=False):
-        st.caption(
-            "Saved discovery data remains available without credentials. Reconnect only "
-            "when you need live AWS data or want to manually create a fresh snapshot."
-        )
-        with st.form("reconnect_aws_credentials_form"):
-            access_key_id = st.text_input(
-                "AWS Access Key ID",
-                placeholder="AKIA...",
-                key="reconnect_access_key_id",
-            )
-            secret_access_key = st.text_input(
-                "AWS Secret Access Key",
-                type="password",
-                key="reconnect_secret_access_key",
-            )
-            session_token = st.text_input(
-                "AWS Session Token (optional)",
-                type="password",
-                key="reconnect_session_token",
-            )
-            submitted = st.form_submit_button(
-                "Reconnect AWS Session",
-                type="primary",
-                use_container_width=True,
-            )
-
-        if not submitted:
-            return
-        if not access_key_id or not secret_access_key:
-            st.error("Access Key ID and Secret Access Key are required.")
-            return
-
-        payload = {
-            "access_key_id": access_key_id.strip(),
-            "secret_access_key": secret_access_key,
-            "session_token": session_token.strip() if session_token.strip() else None,
-        }
-        verified = verify_aws_account(payload)
-        if not verified:
-            return
-
-        verified_account_id = str(verified.get("account_id") or "")
-        if expected_account_id and verified_account_id != str(expected_account_id):
-            disconnect_aws_backend_session()
-            st.error(
-                "These credentials belong to a different AWS account. The saved "
-                "snapshot was not changed."
-            )
-            return
-
-        st.session_state["aws_connection"] = verified
-        st.session_state["aws_credentials"] = payload
-        st.success("AWS live session reconnected. Saved snapshot remains unchanged.")
-        st.rerun()
 
 
 # ============================================================
@@ -3302,100 +3811,107 @@ def render_home_page(
     if not aws_connection:
 
         st.info(
-            "No AWS account is connected. "
-            "Enter the client credentials below to begin."
+            "No AWS account is connected. Configure it once; live AWS queries can "
+            "then authenticate automatically whenever snapshot evidence is insufficient."
         )
 
-        with st.form(
-            "home_aws_connection_form"
-        ):
-            st.subheader(
-                "Connect AWS Account"
-            )
+        auth_mode = st.radio(
+            "Connection method",
+            options=[
+                "Cross-account IAM Role (recommended)",
+                "Access Key / Secret Key (POC)",
+            ],
+            horizontal=True,
+            key="aws_auth_mode",
+        )
 
-            access_key_id = st.text_input(
-                "AWS Access Key ID",
-                placeholder="AKIA...",
+        if auth_mode.startswith("Cross-account"):
+            st.caption(
+                "DhanushGuard uses its server-side AWS identity to call STS AssumeRole. "
+                "Only the role configuration is stored; temporary credentials are refreshed automatically."
             )
-
-            secret_access_key = (
-                st.text_input(
-                    "AWS Secret Access Key",
+            if st.button("Show IAM trust principal / policy template", key="show_assume_role_source"):
+                source=get_assume_role_source_identity()
+                if source:
+                    st.session_state["assume_role_source_identity"]=source
+            source=st.session_state.get("assume_role_source_identity")
+            if source:
+                with st.expander("Client role trust configuration",expanded=True):
+                    st.code(str(source.get("trust_principal_arn") or ""),language="text")
+                    st.json(source.get("trust_policy_template") or {})
+                    st.caption("Replace REPLACE_WITH_EXTERNAL_ID with the same External ID entered below.")
+            with st.form("home_aws_role_connection_form"):
+                role_arn = st.text_input(
+                    "Client audit Role ARN",
+                    placeholder="arn:aws:iam::123456789012:role/DhanushGuardAuditRole",
+                )
+                external_id = st.text_input(
+                    "External ID (recommended)",
                     type="password",
                 )
-            )
-
-            session_token = (
-                st.text_input(
-                    "AWS Session Token (optional)",
-                    type="password",
+                default_region = st.text_input(
+                    "Default Region",
+                    value="us-east-1",
                 )
-            )
-
-            connect_clicked = (
-                st.form_submit_button(
-                    "Verify AWS Account",
+                connect_clicked = st.form_submit_button(
+                    "Verify IAM Role",
                     type="primary",
                     use_container_width=True,
                 )
+            if connect_clicked:
+                if not role_arn.strip():
+                    st.error("Role ARN is required.")
+                else:
+                    verification_data = verify_assume_role_connection({
+                        "role_arn": role_arn.strip(),
+                        "external_id": external_id.strip() or None,
+                        "default_region": default_region.strip() or "us-east-1",
+                    })
+                    if verification_data:
+                        saved_scan = get_active_scan(str(verification_data.get("account_id") or ""))
+                        st.session_state["aws_connection"] = verification_data
+                        if saved_scan:
+                            st.session_state["aws_scan"] = saved_scan
+                        else:
+                            clear_scan_results()
+                            st.session_state["aws_connection"] = verification_data
+                        st.success("AWS IAM Role verified. Automatic live authentication is configured.")
+                        st.rerun()
+        else:
+            st.caption(
+                "POC mode: the client keys are encrypted before persistence. "
+                "Use a dedicated AWS_CREDENTIAL_ENCRYPTION_KEY in production; cross-account AssumeRole is preferred."
             )
-
-        if connect_clicked:
-
-            if (
-                not access_key_id
-                or not secret_access_key
-            ):
-                st.error(
-                    "Access Key ID and Secret Access Key are required."
+            with st.form("home_aws_connection_form"):
+                access_key_id = st.text_input("AWS Access Key ID", placeholder="AKIA...")
+                secret_access_key = st.text_input("AWS Secret Access Key", type="password")
+                session_token = st.text_input("AWS Session Token (optional)", type="password")
+                default_region = st.text_input("Default Region", value="us-east-1", key="poc_default_region")
+                connect_clicked = st.form_submit_button(
+                    "Verify and Save Encrypted Connection",
+                    type="primary",
+                    use_container_width=True,
                 )
-
-            else:
-                credentials_payload = {
-                    "access_key_id":
-                        access_key_id.strip(),
-
-                    "secret_access_key":
-                        secret_access_key,
-
-                    "session_token":
-                        (
-                            session_token.strip()
-                            if session_token.strip()
-                            else None
-                        ),
-                }
-
-                verification_data = (
-                    verify_aws_account(
-                        credentials_payload
-                    )
-                )
-
-                if verification_data:
-                    st.session_state[
-                        "aws_connection"
-                    ] = verification_data
-
-                    st.session_state[
-                        "aws_credentials"
-                    ] = credentials_payload
-
-                    # Reuse the previously saved active snapshot for this account.
-                    # Verification never triggers a discovery refresh automatically.
-                    saved_scan = get_active_scan(
-                        str(verification_data.get("account_id") or "")
-                    )
-                    if saved_scan:
-                        st.session_state["aws_scan"] = saved_scan
-                    else:
-                        clear_scan_results()
-
-                    st.success(
-                        "AWS account verified successfully."
-                    )
-
-                    st.rerun()
+            if connect_clicked:
+                if not access_key_id or not secret_access_key:
+                    st.error("Access Key ID and Secret Access Key are required.")
+                else:
+                    payload={
+                        "access_key_id": access_key_id.strip(),
+                        "secret_access_key": secret_access_key,
+                        "session_token": session_token.strip() or None,
+                        "default_region": default_region.strip() or "us-east-1",
+                    }
+                    verification_data=verify_aws_account(payload)
+                    if verification_data:
+                        saved_scan=get_active_scan(str(verification_data.get("account_id") or ""))
+                        st.session_state["aws_connection"]=verification_data
+                        if saved_scan:
+                            st.session_state["aws_scan"]=saved_scan
+                        else:
+                            clear_scan_results(); st.session_state["aws_connection"]=verification_data
+                        st.success("AWS account verified. Encrypted automatic reconnection is configured.")
+                        st.rerun()
 
         return
 
@@ -3412,13 +3928,13 @@ def render_home_page(
         [2.2, 1, 1]
     )
 
-    live_session_active = get_aws_backend_session_status()
+    auth_status = get_aws_auth_status(aws_connection.get("aws_connection_id") or aws_connection.get("id"))
 
     with top_cols[0]:
-        if live_session_active:
-            st.success(f"AWS account {account_id} · live session connected.")
+        if auth_status.get("auto_connect"):
+            st.success(f"AWS account {account_id} · automatic live access configured.")
         else:
-            st.info(f"AWS account {account_id} · saved snapshot loaded.")
+            st.info(f"AWS account {account_id} · saved snapshot access only.")
 
     with top_cols[1]:
         st.metric(
@@ -3431,8 +3947,8 @@ def render_home_page(
 
     with top_cols[2]:
         st.metric(
-            "Runtime",
-            "Live" if live_session_active else "Snapshot",
+            "Auth",
+            auth_status.get("auth_type") or aws_connection.get("auth_type") or "UNKNOWN",
         )
 
     with st.expander(
@@ -3449,27 +3965,20 @@ def render_home_page(
         )
 
         st.write(
-            "**Backend session:** "
-            + (
-                "Active"
-                if get_aws_backend_session_status()
-                else "Not active"
-            )
+            "**Automatic live authentication:** "
+            + ("Configured" if auth_status.get("auto_connect") else "Not configured")
         )
+        st.write(f"**Authentication type:** {auth_status.get('auth_type') or '-'}")
+        if auth_status.get("last_auth_error"):
+            st.warning(f"Last automatic-auth error: {auth_status.get('last_auth_error')}")
 
         if st.button(
-            "Disconnect Live AWS Session",
+            "Clear Temporary AWS Credential Cache",
             use_container_width=True,
-            key="home_disconnect_aws",
+            key="home_clear_aws_cache",
         ):
             disconnect_aws_backend_session()
-            st.session_state.pop("aws_credentials", None)
-            # Keep the persisted discovery snapshot loaded. Disconnecting only
-            # removes live AWS credentials; saved evidence remains available.
-            st.session_state[
-                "active_page"
-            ] = "home"
-            st.rerun()
+            st.info("Temporary credentials cleared. The saved AWS connection remains configured and will reconnect automatically when needed.")
 
     # ========================================================
     # CONNECTED BUT NO DISCOVERY
@@ -3480,8 +3989,8 @@ def render_home_page(
 
         st.info(
             "The AWS account is verified. "
-            "Run Discovery to establish Regions, Availability Zones, resources, "
-            "billing evidence, and dynamic service/Region classification."
+            "Run Discovery to establish Regions, Availability Zones, "
+            "services, and lightweight resource context."
         )
 
         if st.button(
@@ -3551,7 +4060,7 @@ def render_discovery_page(
         """
         <div class="overview-title">AWS Discovery</div>
         <div class="overview-subtitle">
-            Discover AWS infrastructure, billing evidence, and dynamically classified services/Regions for live NLP queries.
+            Establish the lightweight AWS account context used by live NLP queries.
         </div>
         """,
         unsafe_allow_html=True,
@@ -3566,34 +4075,40 @@ def render_discovery_page(
             st.rerun()
         return
 
+    connection_id = (
+        aws_connection.get("aws_connection_id")
+        or aws_connection.get("id")
+        or (scan_data or {}).get("aws_connection_id")
+    )
+
     if not scan_data:
         st.success(
             f"Connected to AWS account {aws_connection.get('account_id', '-')}"
         )
-        backend_session_active = get_aws_backend_session_status()
+        auth_status = get_aws_auth_status(connection_id) if connection_id else {}
+        if not auth_status.get("auto_connect"):
+            st.error(
+                "Automatic AWS authentication is not configured for this connection. "
+                "Reconnect the account from Home first."
+            )
+            return
 
-        if backend_session_active:
-            run_scan_clicked = st.button(
-                "Create First Discovery Snapshot",
-                type="primary",
-                use_container_width=True,
-                key="start_aws_discovery_scan",
-            )
-            if run_scan_clicked:
-                new_scan_data = refresh_aws_scan()
-                if new_scan_data:
-                    st.session_state["aws_scan"] = new_scan_data
-                    st.session_state["active_chat_id"] = None
-                    st.session_state["active_chat"] = None
-                    st.rerun()
-        else:
-            st.info(
-                "No saved snapshot exists for this account and the live AWS session "
-                "is not active. Reconnect to create the first snapshot."
-            )
-            render_reconnect_aws_form(
-                expected_account_id=str(aws_connection.get("account_id") or "")
-            )
+        run_scan_clicked = st.button(
+            "Create First Discovery Snapshot",
+            type="primary",
+            use_container_width=True,
+            key="start_aws_discovery_scan",
+        )
+        if run_scan_clicked and connection_id:
+            new_scan_data = refresh_aws_scan(int(connection_id))
+            if new_scan_data:
+                st.session_state["aws_scan"] = new_scan_data
+                st.session_state["aws_connection"] = {
+                    **aws_connection,
+                    "aws_connection_id": new_scan_data.get("aws_connection_id") or connection_id,
+                }
+                st.success("AWS discovery snapshot created successfully.")
+                st.rerun()
         return
 
     render_template1_overview(
@@ -3601,44 +4116,29 @@ def render_discovery_page(
         scan_data=scan_data,
     )
 
-    backend_session_active = get_aws_backend_session_status()
     snapshot_time = scan_data.get("completed_at") or scan_data.get("started_at") or "-"
     st.info(
-        f"This page is using saved scan {str(scan_data.get('scan_id') or '-')[:16]} "
-        f"from {snapshot_time}. It will remain unchanged until you manually refresh "
-        "or activate another historical scan."
+        f"Saved immutable snapshot: {str(scan_data.get('scan_id') or '-')[:16]} · {snapshot_time}. "
+        "It changes only when you manually refresh or activate another saved scan."
     )
 
-    refresh_col, session_col = st.columns([1.4, 2.6])
-    with refresh_col:
-        refresh_clicked = st.button(
-            "Refresh Discovery Snapshot",
-            type="primary",
-            use_container_width=True,
-            key="manual_refresh_discovery_snapshot",
-            disabled=not backend_session_active,
-        )
-        if refresh_clicked:
-            new_scan_data = refresh_aws_scan()
-            if new_scan_data:
-                st.session_state["aws_scan"] = new_scan_data
-                st.session_state["aws_connection"] = new_scan_data.get("account", aws_connection)
-                # Existing chats stay tied to their original immutable scan. New chat
-                # selection starts from the newly active snapshot.
-                st.session_state["active_chat_id"] = None
-                st.session_state["active_chat"] = None
-                st.rerun()
-
-    with session_col:
-        if backend_session_active:
-            st.success("Live AWS connected · manual refresh/live queries available")
-        else:
-            st.info("Live AWS not connected · saved snapshot/chat still available")
-
-    if not backend_session_active:
-        render_reconnect_aws_form(
-            expected_account_id=str((scan_data.get("account") or {}).get("account_id") or aws_connection.get("account_id") or "")
-        )
+    refresh_clicked = st.button(
+        "Refresh Discovery Snapshot",
+        type="primary",
+        use_container_width=True,
+        key="manual_refresh_discovery_snapshot",
+    )
+    if refresh_clicked and connection_id:
+        new_scan_data = refresh_aws_scan(int(connection_id))
+        if new_scan_data:
+            st.session_state["aws_scan"] = new_scan_data
+            st.session_state["aws_connection"] = {
+                **aws_connection,
+                "aws_connection_id": new_scan_data.get("aws_connection_id") or connection_id,
+            }
+            st.session_state["active_chat_id"] = None
+            st.session_state["active_chat"] = None
+            st.rerun()
 
     render_scan_status(
         aws_connection=aws_connection,
@@ -3646,15 +4146,9 @@ def render_discovery_page(
         region_data=scan_data.get("regions"),
         zone_data=scan_data.get("zones"),
         resource_data=scan_data.get("resources"),
-        billing_data=scan_data.get("billing"),
-        classification_data=scan_data.get("classification"),
     )
-
-    # Billing-aware results are shown before raw inventory so the auditor
-    # immediately sees what is paid/primary and how Regions are classified.
     render_billing_results(scan_data.get("billing"))
     render_classification_results(scan_data.get("classification"))
-
     render_region_results(scan_data.get("regions"))
     render_zone_results(scan_data.get("zones"))
     render_resource_inventory(scan_data.get("resources"))
@@ -3687,12 +4181,21 @@ def render_settings_page(
 
     st.write("")
     user = st.session_state.get("current_user") or {}
+    workspace = st.session_state.get("active_workspace") or {}
     st.write(f"**Signed in user:** {user.get('username', '-')}")
     st.write(f"**Email:** {user.get('email', '-')}")
-    st.write(
-        "**Live AWS credentials:** "
-        + ("Connected" if get_aws_backend_session_status() else "Not connected")
+    st.write(f"**Active client workspace:** {workspace.get('name', '-')}")
+    st.write(f"**Workspace role:** {workspace.get('role', '-')}")
+    status = get_aws_auth_status(
+        (aws_connection or {}).get("aws_connection_id")
+        or (aws_connection or {}).get("id")
+        or (scan_data or {}).get("aws_connection_id")
     )
+    st.write(
+        "**Automatic AWS authentication:** "
+        + ("Configured" if status.get("auto_connect") else "Not configured")
+    )
+    st.write(f"**Auth type:** {status.get('auth_type') or '-'}")
 
     if aws_connection:
         st.write(f"**AWS account:** {aws_connection.get('account_id', '-')}")
@@ -3709,6 +4212,30 @@ if not st.session_state.get("access_token"):
     render_auth_screen()
     st.stop()
 
+# A client workspace is mandatory before any AWS/chat API is used.
+workspace_list = get_workspaces()
+st.session_state["workspace_list"] = workspace_list
+
+if not workspace_list:
+    render_workspace_onboarding()
+    st.stop()
+
+active_workspace = st.session_state.get("active_workspace") or {}
+workspace_by_id = {
+    int(item["id"]): item
+    for item in workspace_list
+    if item.get("id") is not None
+}
+
+if active_workspace.get("id") not in workspace_by_id:
+    first_workspace = next(iter(workspace_by_id.values()))
+    switch_workspace(first_workspace)
+    active_workspace = first_workspace
+else:
+    # Refresh name/role/status from the backend without changing tenant ID.
+    st.session_state["active_workspace"] = workspace_by_id[active_workspace["id"]]
+    active_workspace = st.session_state["active_workspace"]
+
 
 # ============================================================
 # APPLICATION SESSION DEFAULTS
@@ -3722,14 +4249,16 @@ if "active_page" not in st.session_state:
 # APPLICATION SHELL
 # ============================================================
 
-# On login/page reload, restore the persisted active snapshot from SQLite.
-# This is a read-only DB restore; it never performs AWS discovery automatically.
 if not st.session_state.get("active_snapshot_bootstrapped"):
     if not st.session_state.get("aws_scan"):
-        restored_active_scan = get_active_scan()
-        if restored_active_scan:
-            st.session_state["aws_scan"] = restored_active_scan
-            st.session_state["aws_connection"] = restored_active_scan.get("account", {})
+        restored = get_active_scan()
+        if restored:
+            st.session_state["aws_scan"] = restored
+            account = restored.get("account") or {}
+            st.session_state["aws_connection"] = {
+                **account,
+                "aws_connection_id": restored.get("aws_connection_id"),
+            }
     st.session_state["active_snapshot_bootstrapped"] = True
 
 aws_connection = st.session_state.get("aws_connection")
@@ -3763,8 +4292,7 @@ with st.sidebar:
                     if not scan_id:
                         continue
 
-                    active_marker = " ✓ active" if item.get("is_active") else ""
-                    label = f"{account_id} · {str(scan_id)[:8]}{active_marker}"
+                    label = f"{account_id} · {str(scan_id)[:8]}"
 
                     if st.button(
                         label,
@@ -3775,12 +4303,10 @@ with st.sidebar:
 
                         if restored:
                             st.session_state["aws_scan"] = restored
-                            st.session_state["aws_connection"] = restored.get(
-                                "account",
-                                {},
-                            )
-                            st.session_state["active_chat_id"] = None
-                            st.session_state["active_chat"] = None
+                            st.session_state["aws_connection"] = {
+                                **(restored.get("account") or {}),
+                                "aws_connection_id": restored.get("aws_connection_id"),
+                            }
                             st.session_state["active_page"] = "discovery"
                             st.rerun()
 
@@ -3848,3 +4374,6 @@ else:
         scan_data=scan_data,
     )
 
+
+     
+     
